@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "4ndr0cookie",
+  "version": "1.0",
+  "description": "Utils for basic engagements - Red-team quality of life tool.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "cookies",
+    "downloads",
+    "browsingData",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "src/assets/icons/icon16.png",
+      "48": "src/assets/icons/icon48.png",
+      "128": "src/assets/icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "src/options/options.html",
+  "commands": {
+    "clear-site-data": {
+      "suggested_key": {
+        "default": "Alt+C"
+      },
+      "description": "Clear all site data for current tab"
+    }
+  },
+  "icons": {
+    "16": "src/assets/icons/icon16.png",
+    "48": "src/assets/icons/icon48.png",
+    "128": "src/assets/icons/icon128.png"
+  }
+}
