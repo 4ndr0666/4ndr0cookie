@@ -33,22 +33,22 @@ const Popup = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gray-900">
-      <div className="bg-gray-800 shadow-sm border-b border-gray-700">
-        <div className="px-4 py-3">
-          <h1 className="text-lg font-bold text-cyan-400">4ndr0tools</h1>
+    <div className="w-full h-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800">
+      <div className="hud-card m-2">
+        <div className="border-b border-cyan-300/20 px-4 py-3">
+          <h1 className="text-lg font-bold" style={{ color: '#15FFFF' }}>4ndr0cookie</h1>
           <p className="text-xs text-gray-400">Red-team Quality of Life</p>
         </div>
-      </div>
-      
-      <TabNavigation 
-        tabs={tabs} 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
-      />
-      
-      <div className="bg-gray-900">
-        {renderTabContent()}
+        
+        <TabNavigation 
+          tabs={tabs} 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+        />
+        
+        <div className="p-3">
+          {renderTabContent()}
+        </div>
       </div>
     </div>
   );

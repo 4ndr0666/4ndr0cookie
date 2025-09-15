@@ -265,6 +265,71 @@ const EmailListManager: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {/* Editable Email Rows */}
+            {currentEntries.map((entry) => (
+              <div key={entry.id} className="flex items-center space-x-2 p-3 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
+                <input
+                  type="text"
+                  placeholder="Label (m1, m2...)"
+                  value={entry.label}
+                  onChange={(e) => updateEmailEntry(entry.id, 'label', e.target.value)}
+                  className="w-32 px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400"
+                />
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={entry.email}
+                  onChange={(e) => updateEmailEntry(entry.id, 'email', e.target.value)}
+                  className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400"
+                />
+                <button
+                  onClick={() => copyToClipboard(entry.email)}
+                  className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-500 transition-colors font-medium"
+                  disabled={!entry.email}
+                >
+                  📋 Copy
+                </button>
+                <button
+                  onClick={() => deleteEmailEntry(entry.id)}
+                  className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-500 transition-colors font-medium"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            ))}
+
+            {/* Import from Text */}
+            <div className="p-3 bg-gray-800 rounded-lg border border-gray-700">
+              <h4 className="text-sm font-medium text-gray-300 mb-2">Import from Text</h4>
+              <textarea
+                placeholder="Paste email list here (format: label: email@example.com)"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400 text-sm"
+                rows={3}
+                onPaste={(e) => {
+                  setTimeout(() => {
+                    const text = e.currentTarget.value;
+                    if (text.trim()) {
+                      importFromText(text);
+                      e.currentTarget.value = '';
+                    }
+                  }, 100);
+                }}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Format: "m1: user@domain.com" (one per line)
+              </p>
+            </div>
+
+            {/* Delete Group */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => deleteGroup(activeGroup)}
+                className="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-500 transition-colors font-medium"
+              >
+                🗑️ Delete Group
+              </button>
+            </div>
           </div>
         )}
       </div>

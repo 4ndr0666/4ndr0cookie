@@ -522,6 +522,231 @@ video {
 [hidden]:where(:not([hidden="until-found"])) {
   display: none;
 }
+/* Frosted glass card */
+.glass-card {
+  border-radius: 0.75rem;
+  border-width: 1px;
+  border-color: rgb(255 255 255 / 0.1);
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+    background: rgba(14, 22, 29, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+/* Section headers */
+.section-title {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+
+  .section-title {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+.section-title {
+    color: #15FFFF;
+  }
+/* Cyan brand button */
+.btn-brand {
+  border-radius: 0.375rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+}
+.btn-brand:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+@media (min-width: 640px) {
+
+  .btn-brand {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+.btn-brand {
+  border-width: 1px;
+  border-color: rgb(103 232 249 / 0.4);
+    color: #062427;
+    background-color: #15FFFF;
+}
+.btn-brand:hover {
+    background-color: #80ffff;
+  }
+/* Neutral button */
+.btn-neutral {
+  border-radius: 0.375rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+}
+.btn-neutral:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+@media (min-width: 640px) {
+
+  .btn-neutral {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+.btn-neutral {
+  border-width: 1px;
+  border-color: rgb(255 255 255 / 0.1);
+  background-color: rgb(255 255 255 / 0.05);
+  color: rgb(236 254 255 / 0.9);
+}
+.btn-neutral:hover {
+  background-color: rgb(255 255 255 / 0.1);
+}
+/* Danger button */
+.btn-danger {
+  border-radius: 0.375rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+}
+.btn-danger:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+@media (min-width: 640px) {
+
+  .btn-danger {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+.btn-danger {
+  border-width: 1px;
+  border-color: rgb(185 28 28 / 0.4);
+  background-color: rgb(127 29 29 / 0.3);
+  --tw-text-opacity: 1;
+  color: rgb(252 165 165 / var(--tw-text-opacity, 1));
+}
+.btn-danger:hover {
+  background-color: rgb(127 29 29 / 0.5);
+}
+.btn-danger:focus {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(248 113 113 / var(--tw-ring-opacity, 1));
+}
+/* HUD aesthetic: neon cyan buttons and cards */
+.hud-card {
+    position: relative;
+    border: 1px solid rgba(21, 255, 255, 0.25);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px rgba(21,255,255,0.08);
+    background: linear-gradient(180deg, rgba(10,18,24,0.75), rgba(10,18,24,0.55));
+    border-radius: 0.5rem;
+  }
+.hud-section {
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+}
+@media (min-width: 640px) {
+
+  .hud-section {
+    padding: 1rem;
+  }
+}
+.hud-section {
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(8, 16, 22, 0.55);
+  }
+.hud-title {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+
+  .hud-title {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+.hud-title {
+    color: #15FFFF;
+  }
+.hud-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.375rem 0.75rem; /* compact */
+    border-radius: 0.375rem;
+    border: 1px solid rgba(21,255,255,0.4);
+    color: #bffcff;
+    background: rgba(8,20,24,0.55);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(21,255,255,0.15);
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  }
+.hud-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 18px rgba(21,255,255,0.25);
+    background: rgba(12,28,34,0.6);
+  }
+.hud-btn::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: -4px;
+    width: 26px;
+    height: 8px;
+    background: linear-gradient(90deg, rgba(21,255,255,0), rgba(21,255,255,0.65));
+    clip-path: polygon(0 0, 100% 0, 85% 100%, 0% 100%);
+    opacity: 0.8;
+    pointer-events: none;
+  }
+.hud-btn-danger {
+    border-color: rgba(255,85,85,0.4);
+    color: #ffd6d6;
+    background: rgba(60, 8, 8, 0.45);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(255,85,85,0.18);
+  }
+.hud-btn-danger:hover {
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 18px rgba(255,85,85,0.28);
+    background: rgba(75, 10, 10, 0.5);
+  }
 .static {
   position: static;
 }
@@ -607,6 +832,9 @@ video {
 .min-h-screen {
   min-height: 100vh;
 }
+.w-32 {
+  width: 8rem;
+}
 .w-4 {
   width: 1rem;
 }
@@ -645,6 +873,9 @@ video {
 }
 .items-center {
   align-items: center;
+}
+.justify-end {
+  justify-content: flex-end;
 }
 .justify-center {
   justify-content: center;
@@ -694,11 +925,6 @@ video {
   --tw-space-y-reverse: 0;
   margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
-}
-.space-y-8 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-y-reverse: 0;
-  margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
-  margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
 .overflow-y-auto {
   overflow-y: auto;
@@ -762,9 +988,17 @@ video {
   --tw-border-opacity: 1;
   border-color: rgb(55 65 81 / var(--tw-border-opacity, 1));
 }
-.border-red-600 {
-  --tw-border-opacity: 1;
-  border-color: rgb(220 38 38 / var(--tw-border-opacity, 1));
+.border-white\\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}
+.border-white\\/20 {
+  border-color: rgb(255 255 255 / 0.2);
+}
+.border-cyan-300\\/20 {
+  border-color: rgb(103 232 249 / 0.2);
+}
+.border-cyan-300\\/30 {
+  border-color: rgb(103 232 249 / 0.3);
 }
 .bg-blue-500 {
   --tw-bg-opacity: 1;
@@ -810,14 +1044,34 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
 }
+.bg-white\\/10 {
+  background-color: rgb(255 255 255 / 0.1);
+}
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+.from-gray-900 {
+  --tw-gradient-from: #111827 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(17 24 39 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-gray-950 {
+  --tw-gradient-from: #030712 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(3 7 18 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-gray-900 {
+  --tw-gradient-to: rgb(17 24 39 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #111827 var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-gray-800 {
+  --tw-gradient-to: #1f2937 var(--tw-gradient-to-position);
+}
 .p-3 {
   padding: 0.75rem;
 }
 .p-4 {
   padding: 1rem;
-}
-.p-6 {
-  padding: 1.5rem;
 }
 .px-1 {
   padding-left: 0.25rem;
@@ -834,10 +1088,6 @@ video {
 .px-4 {
   padding-left: 1rem;
   padding-right: 1rem;
-}
-.px-6 {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
 }
 .py-1 {
   padding-top: 0.25rem;
@@ -879,6 +1129,10 @@ video {
 .text-sm {
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
 }
 .text-xs {
   font-size: 0.75rem;
@@ -929,6 +1183,9 @@ video {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
+.opacity-70 {
+  opacity: 0.7;
+}
 .shadow-sm {
   --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
@@ -953,119 +1210,187 @@ video {
 .duration-300 {
   transition-duration: 300ms;
 }
+
+/* Fallback base styles to ensure visibility even if Tailwind fails */
+body {
+  background: #0b0f14;
+  color: #e5f7ff;
+}
+
 .file\\:mr-4::file-selector-button {
   margin-right: 1rem;
 }
+
 .file\\:rounded::file-selector-button {
   border-radius: 0.25rem;
 }
+
 .file\\:border-0::file-selector-button {
   border-width: 0px;
 }
+
 .file\\:bg-cyan-400::file-selector-button {
   --tw-bg-opacity: 1;
   background-color: rgb(34 211 238 / var(--tw-bg-opacity, 1));
 }
+
 .file\\:px-2::file-selector-button {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
+
 .file\\:py-1::file-selector-button {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
 }
+
 .file\\:font-medium::file-selector-button {
   font-weight: 500;
 }
+
 .file\\:text-gray-900::file-selector-button {
   --tw-text-opacity: 1;
   color: rgb(17 24 39 / var(--tw-text-opacity, 1));
 }
+
+.hover\\:border-gray-600:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(75 85 99 / var(--tw-border-opacity, 1));
+}
+
 .hover\\:bg-blue-500:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(59 130 246 / var(--tw-bg-opacity, 1));
 }
+
 .hover\\:bg-blue-600:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));
 }
+
 .hover\\:bg-cyan-300:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(103 232 249 / var(--tw-bg-opacity, 1));
 }
+
 .hover\\:bg-gray-500:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(107 114 128 / var(--tw-bg-opacity, 1));
 }
-.hover\\:bg-gray-600:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
-}
+
 .hover\\:bg-gray-700:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(55 65 81 / var(--tw-bg-opacity, 1));
 }
+
 .hover\\:bg-green-500:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(34 197 94 / var(--tw-bg-opacity, 1));
 }
+
 .hover\\:bg-red-500:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(239 68 68 / var(--tw-bg-opacity, 1));
 }
+
 .hover\\:bg-red-600:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(220 38 38 / var(--tw-bg-opacity, 1));
 }
-.hover\\:bg-red-900:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(127 29 29 / var(--tw-bg-opacity, 1));
-}
+
 .hover\\:text-cyan-400:hover {
   --tw-text-opacity: 1;
   color: rgb(34 211 238 / var(--tw-text-opacity, 1));
 }
+
 .hover\\:opacity-80:hover {
   opacity: 0.8;
 }
+
 .hover\\:file\\:bg-cyan-300::file-selector-button:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(103 232 249 / var(--tw-bg-opacity, 1));
 }
+
 .focus\\:border-cyan-400:focus {
   --tw-border-opacity: 1;
   border-color: rgb(34 211 238 / var(--tw-border-opacity, 1));
 }
+
 .focus\\:outline-none:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
 }
+
 .focus\\:ring-2:focus {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
+
 .focus\\:ring-blue-500:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity, 1));
 }
+
 .focus\\:ring-cyan-400:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(34 211 238 / var(--tw-ring-opacity, 1));
 }
-.focus\\:ring-red-400:focus {
-  --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(248 113 113 / var(--tw-ring-opacity, 1));
-}
+
 .disabled\\:bg-gray-600:disabled {
   --tw-bg-opacity: 1;
   background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
 }
+
 .disabled\\:text-gray-400:disabled {
   --tw-text-opacity: 1;
   color: rgb(156 163 175 / var(--tw-text-opacity, 1));
 }
-`, "",{"version":3,"sources":["webpack://./src/options/options.css"],"names":[],"mappings":"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","sourcesContent":["@tailwind base;\n@tailwind components;\n@tailwind utilities;\n"],"sourceRoot":""}]);
+
+@media (min-width: 640px) {
+
+  .sm\\:mb-4 {
+    margin-bottom: 1rem;
+  }
+
+  .sm\\:space-y-8 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(2rem * var(--tw-space-y-reverse));
+  }
+
+  .sm\\:p-6 {
+    padding: 1.5rem;
+  }
+
+  .sm\\:px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .sm\\:px-6 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .sm\\:py-4 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .sm\\:py-8 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .sm\\:text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+`, "",{"version":3,"sources":["webpack://./src/options/options.css"],"names":[],"mappings":"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","sourcesContent":["@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n/* Fallback base styles to ensure visibility even if Tailwind fails */\nbody {\n  background: #0b0f14;\n  color: #e5f7ff;\n}\n\n@layer components {\n  /* Frosted glass card */\n  .glass-card {\n    @apply rounded-xl border border-white/10 shadow-lg;\n    background: rgba(14, 22, 29, 0.6);\n    backdrop-filter: blur(10px);\n    -webkit-backdrop-filter: blur(10px);\n  }\n\n  /* Section headers */\n  .section-title {\n    @apply text-base sm:text-lg font-semibold;\n    color: theme('colors.brand');\n  }\n\n  /* Cyan brand button */\n  .btn-brand {\n    @apply px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md focus:outline-none focus:ring-2;\n    @apply border border-cyan-300/40;\n    color: #062427;\n    background-color: theme('colors.brand');\n  }\n\n  .btn-brand:hover {\n    background-color: #80ffff;\n  }\n\n  /* Neutral button */\n  .btn-neutral {\n    @apply px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md focus:outline-none focus:ring-2;\n    @apply text-cyan-50/90 bg-white/5 border border-white/10 hover:bg-white/10;\n  }\n\n  /* Danger button */\n  .btn-danger {\n    @apply px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md focus:outline-none focus:ring-2;\n    @apply text-red-300 bg-red-900/30 border border-red-700/40 hover:bg-red-900/50 focus:ring-red-400;\n  }\n\n  /* HUD aesthetic: neon cyan buttons and cards */\n  .hud-card {\n    position: relative;\n    border: 1px solid rgba(21, 255, 255, 0.25);\n    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 18px rgba(21,255,255,0.08);\n    background: linear-gradient(180deg, rgba(10,18,24,0.75), rgba(10,18,24,0.55));\n    @apply rounded-lg;\n  }\n\n  .hud-section {\n    @apply p-3 sm:p-4 rounded-md;\n    border: 1px solid rgba(255,255,255,0.08);\n    background: rgba(8, 16, 22, 0.55);\n  }\n\n  .hud-title {\n    @apply text-sm sm:text-base font-semibold mb-2;\n    color: #15FFFF;\n  }\n\n  .hud-btn {\n    position: relative;\n    display: inline-flex;\n    align-items: center;\n    gap: 0.4rem;\n    padding: 0.375rem 0.75rem; /* compact */\n    border-radius: 0.375rem;\n    border: 1px solid rgba(21,255,255,0.4);\n    color: #bffcff;\n    background: rgba(8,20,24,0.55);\n    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(21,255,255,0.15);\n    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;\n  }\n\n  .hud-btn:hover {\n    transform: translateY(-1px);\n    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 18px rgba(21,255,255,0.25);\n    background: rgba(12,28,34,0.6);\n  }\n\n  .hud-btn::after {\n    content: \"\";\n    position: absolute;\n    right: 8px;\n    top: -4px;\n    width: 26px;\n    height: 8px;\n    background: linear-gradient(90deg, rgba(21,255,255,0), rgba(21,255,255,0.65));\n    clip-path: polygon(0 0, 100% 0, 85% 100%, 0% 100%);\n    opacity: 0.8;\n    pointer-events: none;\n  }\n\n  .hud-btn-danger {\n    border-color: rgba(255,85,85,0.4);\n    color: #ffd6d6;\n    background: rgba(60, 8, 8, 0.45);\n    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(255,85,85,0.18);\n  }\n  .hud-btn-danger:hover {\n    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 0 18px rgba(255,85,85,0.28);\n    background: rgba(75, 10, 10, 0.5);\n  }\n\n  .hud-input {\n    @apply w-full rounded-md text-sm px-3 py-2;\n    border: 1px solid rgba(255,255,255,0.12);\n    background: rgba(6, 14, 18, 0.6);\n    color: #d7f9ff;\n  }\n  .hud-input::placeholder { color: rgba(191, 252, 255, 0.4); }\n}\n\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -36525,7 +36850,7 @@ var Options = function () {
         var url = URL.createObjectURL(dataBlob);
         var link = document.createElement('a');
         link.href = url;
-        link.download = '4ndr0tools-settings.json';
+        link.download = '4ndr0cookie-settings.json';
         link.click();
         URL.revokeObjectURL(url);
     };
@@ -36548,9 +36873,7 @@ var Options = function () {
         };
         reader.readAsText(file);
     };
-    return ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "min-h-screen bg-gray-900 py-8" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "max-w-4xl mx-auto px-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "bg-gray-800 rounded-lg shadow-sm border border-gray-700" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "border-b border-gray-700 px-6 py-4" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h1", __assign({ className: "text-2xl font-bold text-cyan-400" }, { children: "4ndr0tools Settings" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-sm text-gray-400 mt-1" }, { children: "Configure your red-team quality of life tool preferences" }))] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "p-6 space-y-8" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "text-lg font-semibold text-cyan-400 mb-4" }, { children: "Email List Manager" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "space-y-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Enable Email List Management" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Manage multiple email groups for engagements" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.emailListsEnabled, onChange: function (e) { return updateSetting('emailListsEnabled', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-gray-600 bg-gray-700 focus:ring-cyan-400" })] })) }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "text-lg font-semibold text-cyan-400 mb-4" }, { children: "Site Clearance" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "space-y-4" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Enable Site Data Clearance" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Clear cookies, storage, and cache for current site (Alt+C)" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.siteClearanceEnabled, onChange: function (e) { return updateSetting('siteClearanceEnabled', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-gray-600 bg-gray-700 focus:ring-cyan-400" })] })), settings.siteClearanceEnabled && ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.Fragment, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Auto-reload after clearance" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Automatically reload page after clearing site data" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.autoReload, onChange: function (e) { return updateSetting('autoReload', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-gray-600 bg-gray-700 focus:ring-cyan-400" })] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Show badge notifications" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Display success/error badges on extension icon" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.showBadgeNotifications, onChange: function (e) { return updateSetting('showBadgeNotifications', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-gray-600 bg-gray-700 focus:ring-cyan-400" })] }))] }))] }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "text-lg font-semibold text-cyan-400 mb-4" }, { children: "Cookie Backup & Restore" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "space-y-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Enable Cookie Backup/Restore" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Encrypted system-wide cookie backup and restore functionality" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.cookieBackupEnabled, onChange: function (e) { return updateSetting('cookieBackupEnabled', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-gray-600 bg-gray-700 focus:ring-cyan-400" })] })) }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "text-lg font-semibold text-cyan-400 mb-4" }, { children: "General" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "space-y-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Sync Settings" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Synchronize settings across devices" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.syncSettings, onChange: function (e) { return updateSetting('syncSettings', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-gray-600 bg-gray-700 focus:ring-cyan-400" })] })) }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "text-lg font-semibold text-cyan-400 mb-4" }, { children: "Keyboard Shortcuts" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "bg-gray-700 rounded-lg p-4" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "space-y-2" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex justify-between items-center" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("span", __assign({ className: "text-sm text-gray-300" }, { children: "Clear site data" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("kbd", __assign({ className: "px-2 py-1 text-xs font-mono bg-gray-600 text-cyan-400 rounded" }, { children: "Alt+C" }))] })) })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500 mt-3" }, { children: "Note: Keyboard shortcuts work on any webpage when the extension is active." }))] }))] })] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "border-t border-gray-700 px-6 py-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex space-x-3" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("button", __assign({ onClick: exportSettings, className: "px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-400" }, { children: "Export Settings" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("label", __assign({ className: "px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer" }, { children: ["Import Settings", (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "file", accept: ".json", onChange: importSettings, className: "hidden" })] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("button", __assign({ onClick: resetToDefaults, className: "px-4 py-2 text-sm font-medium text-red-400 bg-gray-700 border border-red-600 rounded-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-400" }, { children: "Reset to Defaults" }))] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center space-x-3" }, { children: [saveStatus === 'success' && ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("span", __assign({ className: "text-sm text-green-400" }, { children: "Settings saved!" }))), saveStatus === 'error' && ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("span", __assign({ className: "text-sm text-red-400" }, { children: "Error saving settings" }))), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("button", __assign({ onClick: saveSettings, disabled: isSaving, className: "px-6 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 ".concat(isSaving
-                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                                : 'bg-cyan-400 text-gray-900 hover:bg-cyan-300') }, { children: isSaving ? 'Saving...' : 'Save Settings' }))] }))] })) }))] })) })) })));
+    return ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 py-4 sm:py-8" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "max-w-4xl mx-auto px-3 sm:px-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "hud-card" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "border-b border-cyan-300/20 px-4 sm:px-6 py-3 sm:py-4" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h1", __assign({ className: "text-xl sm:text-2xl font-bold", style: { color: '#15FFFF' } }, { children: "4ndr0cookie Settings" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-sm text-gray-400 mt-1" }, { children: "Configure your red-team quality of life tool preferences" }))] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "p-4 sm:p-6 space-y-6 sm:space-y-8" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "hud-title" }, { children: "Email List Manager" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "hud-section space-y-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Enable Email List Management" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Manage multiple email groups for engagements" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.emailListsEnabled, onChange: function (e) { return updateSetting('emailListsEnabled', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-cyan-300/30 bg-white/10 focus:ring-cyan-400" })] })) }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "hud-title" }, { children: "Site Clearance" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "hud-section space-y-4" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Enable Site Data Clearance" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Clear cookies, storage, and cache for current site (Alt+C)" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.siteClearanceEnabled, onChange: function (e) { return updateSetting('siteClearanceEnabled', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-cyan-300/30 bg-white/10 focus:ring-cyan-400" })] })), settings.siteClearanceEnabled && ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.Fragment, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Auto-reload after clearance" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Automatically reload page after clearing site data" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.autoReload, onChange: function (e) { return updateSetting('autoReload', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-cyan-300/30 bg-white/10 focus:ring-cyan-400" })] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Show badge notifications" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Display success/error badges on extension icon" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.showBadgeNotifications, onChange: function (e) { return updateSetting('showBadgeNotifications', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-cyan-300/30 bg-white/10 focus:ring-cyan-400" })] }))] }))] }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "hud-title" }, { children: "Cookie Backup & Restore" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "hud-section space-y-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Enable Cookie Backup/Restore" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Encrypted system-wide cookie backup and restore functionality" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.cookieBackupEnabled, onChange: function (e) { return updateSetting('cookieBackupEnabled', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-cyan-300/30 bg-white/10 focus:ring-cyan-400" })] })) }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "hud-title" }, { children: "General" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "hud-section space-y-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", __assign({ className: "text-sm font-medium text-gray-300" }, { children: "Sync Settings" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500" }, { children: "Synchronize settings across devices" }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "checkbox", checked: settings.syncSettings, onChange: function (e) { return updateSetting('syncSettings', e.target.checked); }, className: "h-4 w-4 text-cyan-400 rounded border-cyan-300/30 bg-white/10 focus:ring-cyan-400" })] })) }))] }), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("section", { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("h2", __assign({ className: "hud-title" }, { children: "Keyboard Shortcuts" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "hud-section" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "space-y-2" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex justify-between items-center" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("span", __assign({ className: "text-sm text-gray-300" }, { children: "Clear site data" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("kbd", __assign({ className: "px-2 py-1 text-xs font-mono bg-gray-600 text-cyan-400 rounded" }, { children: "Alt+C" }))] })) })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("p", __assign({ className: "text-xs text-gray-500 mt-3" }, { children: "Note: Keyboard shortcuts work on any webpage when the extension is active." }))] }))] })] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", __assign({ className: "border-t border-cyan-300/20 px-4 sm:px-6 py-3 sm:py-4" }, { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center justify-between" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex space-x-3" }, { children: [(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("button", __assign({ onClick: exportSettings, className: "hud-btn" }, { children: "Export Settings" })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("label", __assign({ className: "hud-btn cursor-pointer" }, { children: ["Import Settings", (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("input", { type: "file", accept: ".json", onChange: importSettings, className: "hidden" })] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("button", __assign({ onClick: resetToDefaults, className: "hud-btn hud-btn-danger" }, { children: "Reset to Defaults" }))] })), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxs)("div", __assign({ className: "flex items-center space-x-3" }, { children: [saveStatus === 'success' && ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("span", __assign({ className: "text-sm text-green-400" }, { children: "Settings saved!" }))), saveStatus === 'error' && ((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("span", __assign({ className: "text-sm text-red-400" }, { children: "Error saving settings" }))), (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)("button", __assign({ onClick: saveSettings, disabled: isSaving, className: "hud-btn ".concat(isSaving ? 'opacity-70 cursor-not-allowed' : '') }, { children: isSaving ? 'Saving...' : 'Save Settings' }))] }))] })) }))] })) })) })));
 };
 var root = react_dom_client__WEBPACK_IMPORTED_MODULE_2__.createRoot(document.getElementById('root'));
 root.render((0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)((react__WEBPACK_IMPORTED_MODULE_1___default().StrictMode), { children: (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_0__.jsx)(Options, {}) }));

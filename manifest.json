@@ -23,7 +23,7 @@
     }
   },
   "background": {
-    "service_worker": "src/background/service-worker.js"
+    "service_worker": "background.js"
   },
   "options_page": "src/options/options.html",
   "commands": {

@@ -46,11 +46,13 @@ module.exports = {
       title: '4ndr0cookie Popup',
       filename: 'src/popup/popup.html',
       chunks: ['popup'],
+      template: path.resolve('./src/popup/popup.html'),
     }),
     new HtmlPlugin({
       title: '4ndr0cookie Options',
       filename: 'src/options/options.html',
       chunks: ['options'],
+      template: path.resolve('./src/options/options.html'),
     }),
   ],
   output: {

@@ -14,16 +14,12 @@ interface TabNavigationProps {
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ tabs, activeTab, onTabChange }) => {
   return (
-    <div className="flex border-b border-gray-700 bg-gray-800">
+    <div className="hud-tabs">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
-            activeTab === tab.id
-              ? 'bg-cyan-400 text-gray-900 border-b-2 border-cyan-400'
-              : 'text-gray-300 hover:text-cyan-400 hover:bg-gray-700'
-          }`}
+          className={`hud-tab ${activeTab === tab.id ? 'hud-tab-active' : ''}`}
         >
           <div className="flex items-center justify-center space-x-2">
             <span className="text-lg">{tab.icon}</span>

@@ -45,10 +45,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-console.log('4ndr0cookie Service Worker Loaded');
+console.log('4ndr0tools Service Worker Loaded');
 // Initialize extension
 chrome.runtime.onInstalled.addListener(function () {
-    console.log('4ndr0cookie extension installed');
+    console.log('4ndr0tools extension installed');
 });
 // Handle Alt+C command for site clearance
 chrome.commands.onCommand.addListener(function (command) { return __awaiter(void 0, void 0, void 0, function () {
