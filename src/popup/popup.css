@@ -89,10 +89,13 @@ body, button, input, textarea, select {
 
 .hud-card {
   position: relative;
-  margin: 1.15rem;
+  margin: 1.15rem auto;
   flex: 1;
   display: flex;
   flex-direction: column;
+  width: min(460px, calc(100% - 2.3rem));
+  max-height: calc(100% - 2.3rem);
+  min-height: 0;
   border-radius: 22px;
   border: 1px solid rgba(21, 255, 255, 0.35);
   background: linear-gradient(145deg, rgba(6, 18, 28, 0.95), rgba(4, 12, 20, 0.78));
@@ -125,11 +128,17 @@ body, button, input, textarea, select {
   position: relative;
   padding: 1.45rem 1.6rem 1.2rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1.4rem;
   border-bottom: 1px solid rgba(21, 255, 255, 0.22);
   z-index: 2;
+}
+
+.hud-card-header > div {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .hud-card-header::after {
@@ -174,6 +183,8 @@ body, button, input, textarea, select {
   text-transform: uppercase;
   color: rgba(143, 246, 255, 0.88);
   box-shadow: 0 0 18px rgba(21, 255, 255, 0.18);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .hud-chip[data-variant="neutral"] {
@@ -192,8 +203,11 @@ body, button, input, textarea, select {
 
 .hud-content {
   flex: 1;
-  padding: 1.2rem 1.5rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.5rem 1.5rem;
   position: relative;
+  min-height: 0;
   overflow: hidden;
   z-index: 1;
 }
@@ -272,11 +286,15 @@ body, button, input, textarea, select {
 
 .hud-scroll {
   height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding-right: 0.35rem;
+  padding-right: 0.45rem;
+  padding-bottom: 0.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1.2rem;
+  overscroll-behavior: contain;
 }
 
 .hud-scroll::-webkit-scrollbar {
@@ -329,8 +347,15 @@ body, button, input, textarea, select {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1.2rem;
+  flex-wrap: wrap;
+  row-gap: 0.9rem;
   margin-bottom: 1rem;
   z-index: 1;
+}
+
+.hud-section-header > div {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .hud-section-title {
@@ -362,6 +387,26 @@ body, button, input, textarea, select {
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: stretch;
+  width: 100%;
+}
+
+.hud-field-row > * {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.hud-field-row > :first-child {
+  flex: 1 1 220px;
+}
+
+.hud-field-row > [data-block="true"] {
+  flex: 1 1 240px;
+  width: auto;
+}
+
+.hud-field-row > .hud-toolbar {
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .hud-label {
@@ -382,6 +427,7 @@ body, button, input, textarea, select {
   border: 1px solid rgba(21, 255, 255, 0.28);
   background: rgba(6, 18, 26, 0.9);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  min-width: 0;
 }
 
 .hud-select-wrapper--empty {
@@ -549,6 +595,7 @@ body, button, input, textarea, select {
   gap: 0.45rem;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .hud-item__col--compact {
@@ -563,6 +610,31 @@ body, button, input, textarea, select {
   flex-wrap: wrap;
   position: relative;
   z-index: 1;
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .hud-card {
+    width: calc(100% - 2.3rem);
+  }
+
+  .hud-field-row > :first-child {
+    flex-basis: 100%;
+  }
+
+  .hud-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .hud-item__col--compact,
+  .hud-item__col {
+    max-width: none;
+  }
+
+  .hud-item__actions {
+    justify-content: flex-start;
+  }
 }
 
 .hud-input {
@@ -575,6 +647,7 @@ body, button, input, textarea, select {
   font-size: 0.84rem;
   letter-spacing: 0.03em;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  min-width: 0;
 }
 
 .hud-input:hover {
@@ -599,6 +672,7 @@ body, button, input, textarea, select {
 .hud-input-wrapper {
   position: relative;
   flex: 1;
+  min-width: 0;
 }
 
 .hud-input-wrapper .hud-input {
