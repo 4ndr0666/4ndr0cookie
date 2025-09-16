@@ -33,20 +33,30 @@ const Popup = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800">
-      <div className="hud-card m-2">
-        <div className="border-b border-cyan-300/20 px-4 py-3">
-          <h1 className="text-lg font-bold" style={{ color: '#15FFFF' }}>4ndr0cookie</h1>
-          <p className="text-xs text-gray-400">Red-team Quality of Life</p>
-        </div>
-        
-        <TabNavigation 
-          tabs={tabs} 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
+    <div className="hud-app">
+      <div className="hud-backdrop hud-backdrop--grid" aria-hidden="true" />
+      <div className="hud-backdrop hud-backdrop--pulse" aria-hidden="true" />
+      <div className="hud-backdrop hud-backdrop--accent" aria-hidden="true" />
+
+      <div className="hud-card">
+        <header className="hud-card-header">
+          <div>
+            <h1 className="hud-card-title">4ndr0cookie</h1>
+            <p className="hud-card-subtitle">Red-team quality of life toolkit</p>
+          </div>
+          <span className="hud-chip" data-variant="neutral">
+            <span className="hud-chip__dot" />
+            Operational
+          </span>
+        </header>
+
+        <TabNavigation
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
-        
-        <div className="p-3">
+
+        <div className="hud-content">
           {renderTabContent()}
         </div>
       </div>
