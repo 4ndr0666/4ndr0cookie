@@ -1,1 +1,190 @@
-(()=>{"use strict";({89:function(){var e=this&&this.__awaiter||function(e,t,r,n){return new(r||(r=Promise))(function(o,c){function a(e){try{s(n.next(e))}catch(e){c(e)}}function i(e){try{s(n.throw(e))}catch(e){c(e)}}function s(e){var t;e.done?o(e.value):(t=e.value,t instanceof r?t:new r(function(e){e(t)})).then(a,i)}s((n=n.apply(e,t||[])).next())})},t=this&&this.__generator||function(e,t){var r,n,o,c,a={label:0,sent:function(){if(1&o[0])throw o[1];return o[1]},trys:[],ops:[]};return c={next:i(0),throw:i(1),return:i(2)},"function"==typeof Symbol&&(c[Symbol.iterator]=function(){return this}),c;function i(i){return function(s){return function(i){if(r)throw new TypeError("Generator is already executing.");for(;c&&(c=0,i[0]&&(a=0)),a;)try{if(r=1,n&&(o=2&i[0]?n.return:i[0]?n.throw||((o=n.return)&&o.call(n),0):n.next)&&!(o=o.call(n,i[1])).done)return o;switch(n=0,o&&(i=[2&i[0],o.value]),i[0]){case 0:case 1:o=i;break;case 4:return a.label++,{value:i[1],done:!1};case 5:a.label++,n=i[1],i=[0];continue;case 7:i=a.ops.pop(),a.trys.pop();continue;default:if(!((o=(o=a.trys).length>0&&o[o.length-1])||6!==i[0]&&2!==i[0])){a=0;continue}if(3===i[0]&&(!o||i[1]>o[0]&&i[1]<o[3])){a.label=i[1];break}if(6===i[0]&&a.label<o[1]){a.label=o[1],o=i;break}if(o&&a.label<o[2]){a.label=o[2],a.ops.push(i);break}o[2]&&a.ops.pop(),a.trys.pop();continue}i=t.call(e,a)}catch(e){i=[6,e],n=0}finally{r=o=0}if(5&i[0])throw i[1];return{value:i[0]?i[1]:void 0,done:!0}}([i,s])}}};console.log("4ndr0tools Service Worker Loaded"),chrome.runtime.onInstalled.addListener(function(){console.log("4ndr0tools extension installed")}),chrome.commands.onCommand.addListener(function(r){return e(void 0,void 0,void 0,function(){var e,n,o,c,a;return t(this,function(t){switch(t.label){case 0:if("clear-site-data"!==r)return[3,9];t.label=1;case 1:return t.trys.push([1,7,,9]),[4,chrome.tabs.query({active:!0,currentWindow:!0})];case 2:return(e=t.sent()[0]).url?(n=new URL(e.url),o=n.origin,[4,chrome.browsingData.remove({origins:[o]},{cookies:!0,localStorage:!0,indexedDB:!0,webSQL:!0,cache:!0})]):[2];case 3:return t.sent(),e.id?[4,chrome.scripting.executeScript({target:{tabId:e.id},func:function(){try{sessionStorage.clear()}catch(e){console.log("SessionStorage clear failed:",e)}}})]:[3,5];case 4:t.sent(),t.label=5;case 5:return chrome.action.setBadgeText({text:"✓",tabId:e.id}),chrome.action.setBadgeBackgroundColor({color:"#15FFFF",tabId:e.id}),setTimeout(function(){chrome.action.setBadgeText({text:"",tabId:e.id})},2e3),[4,chrome.storage.sync.get(["autoReload"])];case 6:return!1!==t.sent().autoReload&&chrome.tabs.reload(e.id),[3,9];case 7:return c=t.sent(),console.error("Site clearance failed:",c),[4,chrome.tabs.query({active:!0,currentWindow:!0})];case 8:return(a=t.sent()[0]).id&&(chrome.action.setBadgeText({text:"✗",tabId:a.id}),chrome.action.setBadgeBackgroundColor({color:"#FF4444",tabId:a.id}),setTimeout(function(){chrome.action.setBadgeText({text:"",tabId:a.id})},2e3)),[3,9];case 9:return[2]}})})}),chrome.runtime.onMessage.addListener(function(r,n,o){if("clearSiteData"===r.action)return function(){return e(this,void 0,void 0,function(){var e,r,n;return t(this,function(t){switch(t.label){case 0:return[4,chrome.tabs.query({active:!0,currentWindow:!0})];case 1:if(!(e=t.sent()[0]).url)throw new Error("No active tab");return r=new URL(e.url),n=r.origin,[4,chrome.browsingData.remove({origins:[n]},{cookies:!0,localStorage:!0,indexedDB:!0,webSQL:!0,cache:!0})];case 2:return t.sent(),e.id?[4,chrome.scripting.executeScript({target:{tabId:e.id},func:function(){return sessionStorage.clear()}})]:[3,4];case 3:t.sent(),t.label=4;case 4:return[2]}})})}().then(function(){return o({success:!0})}).catch(function(e){return o({success:!1,error:e.message})}),!0;o({success:!1,error:"Unknown action"})})}})[89]()})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./src/background/service-worker.ts":
+/*!******************************************!*\
+  !*** ./src/background/service-worker.ts ***!
+  \******************************************/
+/***/ (function() {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+console.log('4ndr0tools Service Worker Loaded');
+// Initialize extension
+chrome.runtime.onInstalled.addListener(function () {
+    console.log('4ndr0tools extension installed');
+});
+// Handle Alt+C command for site clearance
+chrome.commands.onCommand.addListener(function (command) { return __awaiter(void 0, void 0, void 0, function () {
+    var tab_1, url, origin_1, settings, error_1, tab_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                if (!(command === 'clear-site-data')) return [3 /*break*/, 9];
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 7, , 9]);
+                return [4 /*yield*/, chrome.tabs.query({ active: true, currentWindow: true })];
+            case 2:
+                tab_1 = (_a.sent())[0];
+                if (!tab_1.url)
+                    return [2 /*return*/];
+                url = new URL(tab_1.url);
+                origin_1 = url.origin;
+                // Clear all site data
+                return [4 /*yield*/, chrome.browsingData.remove({ origins: [origin_1] }, {
+                        cookies: true,
+                        localStorage: true,
+                        indexedDB: true,
+                        webSQL: true,
+                        cache: true
+                    })];
+            case 3:
+                // Clear all site data
+                _a.sent();
+                if (!tab_1.id) return [3 /*break*/, 5];
+                return [4 /*yield*/, chrome.scripting.executeScript({
+                        target: { tabId: tab_1.id },
+                        func: function () {
+                            try {
+                                sessionStorage.clear();
+                            }
+                            catch (e) {
+                                console.log('SessionStorage clear failed:', e);
+                            }
+                        }
+                    })];
+            case 4:
+                _a.sent();
+                _a.label = 5;
+            case 5:
+                // Show success badge
+                chrome.action.setBadgeText({ text: '✓', tabId: tab_1.id });
+                chrome.action.setBadgeBackgroundColor({ color: '#15FFFF', tabId: tab_1.id });
+                // Clear badge after 2 seconds
+                setTimeout(function () {
+                    chrome.action.setBadgeText({ text: '', tabId: tab_1.id });
+                }, 2000);
+                return [4 /*yield*/, chrome.storage.sync.get(['autoReload'])];
+            case 6:
+                settings = _a.sent();
+                if (settings.autoReload !== false) {
+                    chrome.tabs.reload(tab_1.id);
+                }
+                return [3 /*break*/, 9];
+            case 7:
+                error_1 = _a.sent();
+                console.error('Site clearance failed:', error_1);
+                return [4 /*yield*/, chrome.tabs.query({ active: true, currentWindow: true })];
+            case 8:
+                tab_2 = (_a.sent())[0];
+                if (tab_2.id) {
+                    chrome.action.setBadgeText({ text: '✗', tabId: tab_2.id });
+                    chrome.action.setBadgeBackgroundColor({ color: '#FF4444', tabId: tab_2.id });
+                    setTimeout(function () {
+                        chrome.action.setBadgeText({ text: '', tabId: tab_2.id });
+                    }, 2000);
+                }
+                return [3 /*break*/, 9];
+            case 9: return [2 /*return*/];
+        }
+    });
+}); });
+// Handle messages from popup
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    switch (request.action) {
+        case 'clearSiteData':
+            handleSiteClearance()
+                .then(function () { return sendResponse({ success: true }); })
+                .catch(function (error) { return sendResponse({ success: false, error: error.message }); });
+            return true;
+        default:
+            sendResponse({ success: false, error: 'Unknown action' });
+    }
+});
+function handleSiteClearance() {
+    return __awaiter(this, void 0, void 0, function () {
+        var tab, url, origin;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, chrome.tabs.query({ active: true, currentWindow: true })];
+                case 1:
+                    tab = (_a.sent())[0];
+                    if (!tab.url)
+                        throw new Error('No active tab');
+                    url = new URL(tab.url);
+                    origin = url.origin;
+                    return [4 /*yield*/, chrome.browsingData.remove({ origins: [origin] }, {
+                            cookies: true,
+                            localStorage: true,
+                            indexedDB: true,
+                            webSQL: true,
+                            cache: true
+                        })];
+                case 2:
+                    _a.sent();
+                    if (!tab.id) return [3 /*break*/, 4];
+                    return [4 /*yield*/, chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            func: function () { return sessionStorage.clear(); }
+                        })];
+                case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = {};
+/******/ 	__webpack_modules__["./src/background/service-worker.ts"]();
+/******/ 	
+/******/ })()
+;
+//# sourceMappingURL=background.js.map

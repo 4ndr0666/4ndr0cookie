@@ -18,12 +18,13 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ tabs, activeTab, onTabCha
       {tabs.map((tab) => (
         <button
           key={tab.id}
-          type="button"
           onClick={() => onTabChange(tab.id)}
           className={`hud-tab ${activeTab === tab.id ? 'hud-tab-active' : ''}`}
         >
-          <span className="hud-tab__icon" aria-hidden="true">{tab.icon}</span>
-          <span className="hud-tab__label">{tab.label}</span>
+          <div className="flex items-center justify-center space-x-2">
+            <span className="text-lg">{tab.icon}</span>
+            <span>{tab.label}</span>
+          </div>
         </button>
       ))}
     </div>
