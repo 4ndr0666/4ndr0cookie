@@ -1,38 +1,36 @@
 # AGENTS.md
 
-**Status:** 🔴 OPEN
-**Repo:** https://github.com/4ndr0666/4ndr0cookie
-**Branch:** codex
+## Requirements
 
----
+- **All files must be explicitly cleaned of CODEX merge artifacts before any commit or pull request merge.**
+- **Use the utility: `0-tests/codex-merge-clean.sh <file ...>` to ensure no `<<<<<<<<<<<<<<<<<<<CODEX_`, `=========================`, or `>>>>>>>>>>>>>>>>>Main` blocks remain.**
+#
+# ```bash
+# #!/usr/bin/env bash
+# set -e
+# for f in $(git diff --cached --name-only); do
+#     [ -f "$f" ] && 0-tests/codex-merge-clean.sh "$f"
+# done
+# git add .
+# ```
+#
+- Run this tool after your merges, and before lint, test, or commit stages.
+- Never use placeholders, half-measures, or omitted code lines.
+- Provide all functional logic end-to-end.
+- Prioritize local scoping and complete path resolution.
+- Adhere to XDG Base Directory Specification for file paths where applicable.
 
-## High-level objective:
+## Workflow
 
-Start the container and download the repo. The first image shows the current GUI for the extension which I do not like. The padding, layout and alignment is off and it doesnt follow the normal futuristic and cyan-centric HUD frosted-glass type of aesthetic I normally implement. I have shared that very aesthetic in the second image. Use it as inspiration to modify the UI aesthetic similarly.
+1. **Review respective linter findings for all code in the codebase.**
+2. For each issue, apply remediation according to standards detailed below.
+3. Remove all merge artifact markers before proceeding.
+4. Validate that all code now passes their respective linters with zero warnings or errors.
+5. Ensure all variable assignments, quoting, and control structures are correct and robust.
+6. For any remaining ambiguity or policy conflict, write it in the summary of changes at `0-tests/task_outcome.md`.
+7. Proceed with the users instructions.
 
-### Objective(s):
-
-Start the container and download the repo. The first image shows the current GUI for the extension which I do not like. The padding, layout and alignment is off and it doesnt follow the normal futuristic and cyan-centric HUD frosted-glass type of aesthetic I normally implement. I have shared that very aesthetic in the second image. Use it as inspiration to modify the UI aesthetic similarly.
-
-## General Best Practices
-
-- Eliminate the potential for error by removing the human aspect; ensure the tasks you need done are handled via one-liners, functions or scripts and not by manual human input. 
-- Never use placeholders, half-measures, or omitted code lines. Provide all functional logic end-to-end.
-- Prioritize local scoping, strict error handling, and complete path resolution.
-- Always lint using ShellCheck where applicable. Adhere to XDG Base Directory Specification for file paths.
-- Automation must minimize user intervention while safeguarding system integrity.
-- All files must be cleaned of CODEX merge artifacts before any commit or pull request merge.
-- Use the utility: `0-tests/codex-merge-clean.sh <file ...>` to ensure no `<<<<<<<<<<<<<<<<<<<CODEX_`, `=========================`, or `>>>>>>>>>>>>>>>>>Main` blocks remain.
-- Run this tool after CODEX-assisted merges, and before lint, test, or commit stages.
-
-## Dev environment tips
-
-- Use `pnpm dlx turbo run where <project_name>` to jump to a package instead of scanning with `ls`.
-- Run `pnpm install --filter <project_name>` to add the package to your workspace so Vite, ESLint, and TypeScript can see it.
-- Use `pnpm create vite@latest <project_name> -- --template react-ts` to spin up a new React + Vite package with TypeScript checks ready.
-- Check the name field inside each package's package.json to confirm the right name—skip the top-level one.
-
-## Testing instructions
+## Testing (minimum)
 
 - Find the CI plan in the .github/workflows folder.
 - Run `pnpm turbo run test --filter <project_name>` to run every check defined for that package.
@@ -42,40 +40,42 @@ Start the container and download the repo. The first image shows the current GUI
 - After moving files or changing imports, run `pnpm lint --filter <project_name>` to be sure ESLint and TypeScript rules still pass.
 - Add or update tests for the code you change, even if nobody asked.
 
-## Validation Requirements
+**Changelogs:**
 
-Ensure all functions explicitly check:
-- Return status of critical commands
-- Input/output validations
-- File existence and permission conditions
+* Comprehensively capture and detail all changes into `0-tests/CHANGELOG.md`.
+* Similarly, summarise any specific or nuanced outcomes in `0-tests/task_outcome.md` post-merge.
 
-### Ensure all functions are:
+**Development Environment Tips:**
 
-- **Well-defined and fully implemented**
-- **Idempotent** and **accessible**
-- **Logically isolated** with explicit error capture
-- **Variable declarations separate from assignments**
-- **Free from ambiguity, newlines, extraneous input, or bad splitting**
-- **Free of cyclomatic complexity**, using clear flow constructs
-
-## Merge & Review Protocol
-
-1. Disclose *function count* + *line count* for every revised script in PR body.
-2. Attach coverage delta (`pytest-cov` output).
-3. Reviewer runs:
-     ./codex-merge-clean.sh $(git diff --name-only main..HEAD)
- 4. If merge artifacts remain, reject PR.
-
-## Changelogs
-
-* Add entry to `0-tests/CHANGELOG.md` for multi-file changes.
-* Summarise outcome in `0-tests/task_outcome.md` post-merge.
-
-## Authorization Guardrails
-
-• Only operate on files/directories explicitly named in a work order.
-• Never bypass lint, dry-run, or coverage thresholds without written exception.
+- Use `pnpm dlx turbo run where <project_name>` to jump to a package instead of scanning with `ls`.
+- Run `pnpm install --filter <project_name>` to add the package to your workspace so Vite, ESLint, and TypeScript can see it.
+- Use `pnpm create vite@latest <project_name> -- --template react-ts` to spin up a new React + Vite package with TypeScript checks ready.
+- Check the name field inside each package's package.json to confirm the right name—skip the top-level one.
 
 ---
 
-# End of AGENTS.md
+# Success Criteria
+
+## Validation
+
+* Each function must be:
+  * **Well-defined and fully implemented**.
+  * **Idempotent** and **accessible**.
+  * **Logically isolated** with explicit error capture.
+  * **Appropriately declared and separated from assignments**.
+  * **Free from ambiguity, newlines, extraneous input, or bad splitting**.
+  * **Free of cyclomatic complexity**, using clear flow constructs
+  * Properly quoted (expansions), especially in command arguments and redirections.
+  * Free from short flags unless standard. (use long-form flags e.g., `--help`).
+  * Non-interactive/pipeline-safe (e.g., `printf` over `echo`).
+  * Explicitly error handling; check all critical command returns.
+  * Checking for file existence/permissions and validating input/output and export.
+  * Bounded appropriately with no arbitrary variables; they must be assigned.
+  * XDG Specifications compliant.
+  * Linted (no errors/warnings).
+
+## Merge & Review Protocol
+
+1. Attach coverage delta (`pytest-cov` output).
+2. Run: codex-merge-clean.sh $(git diff --name-only main..HEAD)
+3. If merge artifacts remain, reject PR and clean the conflicts.
