@@ -48,13 +48,13 @@ const EmailListManager: React.FC = () => {
 
   const createNewGroup = () => {
     if (!newGroupName.trim()) return;
-    
+
     const newGroup: EmailGroup = {
       id: Date.now().toString(),
       name: newGroupName.trim(),
       entries: []
     };
-    
+
     const updatedGroups = [...emailGroups, newGroup];
     saveEmailGroups(updatedGroups);
     setActiveGroup(newGroup.id);
@@ -72,45 +72,45 @@ const EmailListManager: React.FC = () => {
 
   const addEmailEntry = () => {
     if (!activeGroup) return;
-    
+
     const newEntry: EmailEntry = {
       id: Date.now().toString(),
       label: '',
       email: '',
       timestamp: Date.now()
     };
-    
-    const updatedGroups = emailGroups.map(group => 
-      group.id === activeGroup 
+
+    const updatedGroups = emailGroups.map(group =>
+      group.id === activeGroup
         ? { ...group, entries: [...group.entries, newEntry] }
         : group
     );
-    
+
     saveEmailGroups(updatedGroups);
   };
 
   const updateEmailEntry = (entryId: string, field: 'label' | 'email', value: string) => {
-    const updatedGroups = emailGroups.map(group => 
-      group.id === activeGroup 
+    const updatedGroups = emailGroups.map(group =>
+      group.id === activeGroup
         ? {
-            ...group, 
-            entries: group.entries.map(entry => 
+            ...group,
+            entries: group.entries.map(entry =>
               entry.id === entryId ? { ...entry, [field]: value } : entry
             )
           }
         : group
     );
-    
+
     saveEmailGroups(updatedGroups);
   };
 
   const deleteEmailEntry = (entryId: string) => {
-    const updatedGroups = emailGroups.map(group => 
-      group.id === activeGroup 
+    const updatedGroups = emailGroups.map(group =>
+      group.id === activeGroup
         ? { ...group, entries: group.entries.filter(e => e.id !== entryId) }
         : group
     );
-    
+
     saveEmailGroups(updatedGroups);
   };
 
@@ -125,19 +125,19 @@ const EmailListManager: React.FC = () => {
   const exportGroupAsText = () => {
     const group = emailGroups.find(g => g.id === activeGroup);
     if (!group) return;
-    
+
     const textContent = group.entries
       .filter(entry => entry.label && entry.email)
       .map(entry => `${entry.label}: ${entry.email}`)
       .join('\n');
-    
+
     copyToClipboard(textContent);
   };
 
   const importFromText = (text: string) => {
     const lines = text.split('\n').filter(line => line.trim());
     const newEntries: EmailEntry[] = [];
-    
+
     lines.forEach(line => {
       const colonIndex = line.indexOf(':');
       if (colonIndex > 0) {
@@ -153,10 +153,10 @@ const EmailListManager: React.FC = () => {
         }
       }
     });
-    
+
     if (newEntries.length > 0) {
-      const updatedGroups = emailGroups.map(group => 
-        group.id === activeGroup 
+      const updatedGroups = emailGroups.map(group =>
+        group.id === activeGroup
           ? { ...group, entries: [...group.entries, ...newEntries] }
           : group
       );
