@@ -43,9 +43,9 @@ const SiteClearanceManager: React.FC = () => {
     }
   };
 
-  const saveSettings = async () => {
+  const saveSettings = async (value: boolean) => {
     try {
-      await chrome.storage.local.set({ autoReload });
+      await chrome.storage.local.set({ autoReload: value });
     } catch (error) {
       console.error('Error saving settings:', error);
     }
@@ -166,101 +166,94 @@ const SiteClearanceManager: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-gray-900 text-gray-100">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4">
-        <h2 className="text-lg font-semibold mb-2" style={{color: '#15FFFF'}}>Site Clearance Manager</h2>
-        <p className="text-sm text-gray-400">Press Alt+C to clear all site data instantly</p>
-      </div>
-      <div className="text-sm text-gray-400">
-        Current Site: <span className="text-cyan-400 font-mono">{currentSite || 'Unknown'}</span>
-      </div>
-
-      {/* Main Actions */}
-      <div className="p-4 space-y-4">
-        {/* Quick Clear Button */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-md font-medium text-cyan-400 mb-3">Quick Clear (Alt+C)</h3>
-          <div className="space-y-3">
-            <div className="text-center p-4 bg-gray-800 rounded-lg border-2" style={{borderColor: '#15FFFF'}}>
-              <div className="text-2xl mb-2">⌨️</div>
-              <div className="text-lg font-bold" style={{color: '#15FFFF'}}>Alt + C</div>
-              <div className="text-sm text-gray-400 mt-1">Quick Site Clear Hotkey</div>
-            </div>
-            
-            <button
-              onClick={clearSiteData}
-              disabled={isClearing}
-              className={`w-full py-3 px-4 rounded font-medium transition-colors ${
-                isClearing
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-red-600 text-white hover:bg-red-500'
-              }`}
-            >
-              {isClearing ? '🔄 Clearing...' : '🗑️ Manual Clear Site Data'}
-            </button>
+    <div className="hud-scroll space-y-4">
+      <section className="hud-section">
+        <div className="hud-section-header">
+          <div>
+            <h2 className="hud-section-title">Site clearance manager</h2>
+            <p className="hud-section-subtitle">Press Alt+C to clear all site data instantly</p>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Clears cookies, localStorage, sessionStorage, indexedDB, webSQL, and cache for this site only
-          </p>
+          <span className="hud-chip">
+            <span className="hud-chip__dot" />
+            {currentSite ? currentSite : 'Unknown site'}
+          </span>
         </div>
+      </section>
 
-        {/* Site-Specific Cookie Export */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-md font-medium text-cyan-400 mb-3">Site Cookie Export</h3>
-          <button
-            onClick={exportSiteCookies}
-            disabled={!currentSite}
-            className="w-full py-2 px-4 bg-cyan-400 text-gray-900 rounded font-medium hover:bg-cyan-300 transition-colors disabled:bg-gray-600 disabled:text-gray-400"
-          >
-            Export Site Cookies
-          </button>
-          <p className="text-xs text-gray-500 mt-2">
-            Export cookies for the current site as JSON file
-          </p>
-        </div>
-
-        {/* Settings */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-md font-medium text-cyan-400 mb-3">Settings</h3>
-          <label className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              checked={autoReload}
-              onChange={(e) => {
-                setAutoReload(e.target.checked);
-                saveSettings();
-              }}
-              className="w-4 h-4 text-cyan-400 bg-gray-700 border-gray-600 rounded focus:ring-cyan-400"
-            />
-            <span className="text-sm text-gray-300">Auto-reload page after clearing</span>
-          </label>
-        </div>
-
-        {/* Last Clearance Stats */}
-        {lastClearance && (
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-md font-medium text-cyan-400 mb-3">Last Clearance</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-400">Cookies cleared:</div>
-              <div className="text-cyan-400 font-mono">{lastClearance.cookies}</div>
-              <div className="text-gray-400">Storage cleared:</div>
-              <div className="text-cyan-400">✓ All types</div>
-            </div>
-          </div>
-        )}
-
-        {/* Keyboard Shortcut Info */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-md font-medium text-cyan-400 mb-2">Keyboard Shortcut</h3>
-          <div className="flex items-center space-x-2">
-            <kbd className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs font-mono">Alt</kbd>
-            <span className="text-gray-400">+</span>
-            <kbd className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs font-mono">C</kbd>
-            <span className="text-sm text-gray-400 ml-2">Clear current site data</span>
+      <section className="hud-section">
+        <h3 className="hud-section-title">Quick clear</h3>
+        <div className="hud-hotkey">
+          <span className="hud-hotkey__icon" aria-hidden="true">⌨️</span>
+          <div>
+            <div className="hud-hotkey__title">Alt + C</div>
+            <p className="hud-subtext">Instantly purge cookies, storage, indexedDB, webSQL, and cache for this site.</p>
           </div>
         </div>
-      </div>
+        <button
+          type="button"
+          onClick={clearSiteData}
+          disabled={isClearing}
+          className="hud-btn"
+          data-variant="danger"
+          data-block="true"
+        >
+          {isClearing ? '🔄 Clearing…' : '🗑️ Clear site data now'}
+        </button>
+      </section>
+
+      <section className="hud-section">
+        <h3 className="hud-section-title">Site cookie export</h3>
+        <p className="hud-subtext">Export cookies for the current site as a JSON file.</p>
+        <button
+          type="button"
+          onClick={exportSiteCookies}
+          disabled={!currentSite}
+          className="hud-btn"
+          data-variant="accent"
+          data-block="true"
+        >
+          Export site cookies
+        </button>
+      </section>
+
+      <section className="hud-section hud-section--inline">
+        <h3 className="hud-section-title">Settings</h3>
+        <label className="hud-toggle">
+          <input
+            type="checkbox"
+            checked={autoReload}
+            onChange={(e) => {
+              const value = e.target.checked;
+              setAutoReload(value);
+              saveSettings(value);
+            }}
+            className="hud-toggle__input"
+          />
+          <span className="hud-toggle__label">Auto-reload page after clearing</span>
+        </label>
+      </section>
+
+      {lastClearance && (
+        <section className="hud-section hud-section--inline">
+          <h3 className="hud-section-title">Last clearance</h3>
+          <div className="hud-stat-grid">
+            <span className="hud-subtext">Cookies cleared</span>
+            <span className="hud-subtext hud-subtext--mono">{lastClearance.cookies}</span>
+            <span className="hud-subtext">Storage cleared</span>
+            <span className="hud-subtext">✓ Local, session, indexedDB, webSQL</span>
+          </div>
+        </section>
+      )}
+
+      <section className="hud-section hud-section--inline">
+        <h3 className="hud-section-title">Keyboard shortcut</h3>
+        <div className="hud-keyboard">
+          <kbd>Alt</kbd>
+          <span>+</span>
+          <kbd>C</kbd>
+          <span className="hud-subtext">Clear current site data</span>
+        </div>
+      </section>
     </div>
   );
 };
