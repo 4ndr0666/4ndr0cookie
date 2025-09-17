@@ -404,6 +404,18 @@ const CookieBackupManager: React.FC = () => {
                   {isRestoring ? '🔄 Restoring…' : '📥 One-click restore'}
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={restoreFromBackup}
+                disabled={isRestoring || !restorePassword.trim()}
+                className="hud-btn"
+                data-variant="success"
+                data-size="sm"
+                data-block="true"
+              >
+                {isRestoring ? '🔄 Restoring…' : '📥 One-click restore'}
+              </button>
             </div>
           )}
         </div>
