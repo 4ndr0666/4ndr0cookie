@@ -183,7 +183,7 @@ const EmailListManager: React.FC = () => {
 
         <div className="hud-field-vertical">
           <span className="hud-label">Active group</span>
-          <div className="hud-field-row">
+          <div className="hud-input-stack">
             <div className={`hud-select-wrapper${activeGroup ? '' : ' hud-select-wrapper--empty'}`}>
               <select
                 id="email-group-select"
@@ -197,15 +197,17 @@ const EmailListManager: React.FC = () => {
                 ))}
               </select>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowNewGroup(true)}
-              className="hud-btn"
-              data-variant="accent"
-              data-size="sm"
-            >
-              + New
-            </button>
+            <div className="hud-action-tray">
+              <button
+                type="button"
+                onClick={() => setShowNewGroup(true)}
+                className="hud-btn"
+                data-variant="accent"
+                data-size="sm"
+              >
+                + New
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -214,7 +216,7 @@ const EmailListManager: React.FC = () => {
         <section className="hud-section hud-section--inline">
           <div className="hud-field-vertical">
             <span className="hud-label">Create group</span>
-            <div className="hud-field-row">
+            <div className="hud-input-stack">
               <input
                 type="text"
                 placeholder="Group name…"
@@ -223,7 +225,7 @@ const EmailListManager: React.FC = () => {
                 className="hud-input"
                 onKeyDown={(e) => e.key === 'Enter' && createNewGroup()}
               />
-              <div className="hud-toolbar">
+              <div className="hud-toolbar hud-action-tray">
                 <button
                   type="button"
                   onClick={createNewGroup}

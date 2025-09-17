@@ -322,7 +322,7 @@ const CookieBackupManager: React.FC = () => {
 
         <div className="hud-field-vertical">
           <span className="hud-label">Backup password</span>
-          <div className="hud-field-row">
+          <div className="hud-input-stack">
             <div className="hud-input-wrapper">
               <input
                 type={showBackupPassword ? 'text' : 'password'}
@@ -340,17 +340,19 @@ const CookieBackupManager: React.FC = () => {
                 {showBackupPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            <button
-              type="button"
-              onClick={backupAllCookies}
-              disabled={isBackingUp || !backupPassword.trim()}
-              className="hud-btn"
-              data-variant="accent"
-              data-size="sm"
-              data-block="true"
-            >
-              {isBackingUp ? '🔄 Creating backup…' : '💾 One-click backup'}
-            </button>
+            <div className="hud-toolbar hud-action-tray">
+              <button
+                type="button"
+                onClick={backupAllCookies}
+                disabled={isBackingUp || !backupPassword.trim()}
+                className="hud-btn"
+                data-variant="accent"
+                data-size="sm"
+                data-block="true"
+              >
+                {isBackingUp ? '🔄 Creating backup…' : '💾 One-click backup'}
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -386,6 +388,20 @@ const CookieBackupManager: React.FC = () => {
                   aria-label={showRestorePassword ? 'Hide password' : 'Show password'}
                 >
                   {showRestorePassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+
+              <div className="hud-toolbar hud-action-tray">
+                <button
+                  type="button"
+                  onClick={restoreFromBackup}
+                  disabled={isRestoring || !restorePassword.trim()}
+                  className="hud-btn"
+                  data-variant="success"
+                  data-size="sm"
+                  data-block="true"
+                >
+                  {isRestoring ? '🔄 Restoring…' : '📥 One-click restore'}
                 </button>
               </div>
 

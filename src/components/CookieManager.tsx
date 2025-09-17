@@ -135,7 +135,7 @@ const CookieManager: React.FC = () => {
 
         <div className="hud-field-vertical">
           <span className="hud-label">Search & export</span>
-          <div className="hud-field-row">
+          <div className="hud-input-stack">
             <input
               type="text"
               placeholder="Search cookies…"
@@ -143,24 +143,26 @@ const CookieManager: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="hud-input"
             />
-            <button
-              type="button"
-              onClick={() => exportToClipboard('json')}
-              className="hud-btn"
-              data-variant="accent"
-              data-size="sm"
-            >
-              📋 Copy JSON
-            </button>
-            <button
-              type="button"
-              onClick={() => exportToClipboard('netscape')}
-              className="hud-btn"
-              data-variant="success"
-              data-size="sm"
-            >
-              📋 Copy Netscape
-            </button>
+            <div className="hud-toolbar hud-action-tray">
+              <button
+                type="button"
+                onClick={() => exportToClipboard('json')}
+                className="hud-btn"
+                data-variant="accent"
+                data-size="sm"
+              >
+                📋 Copy JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => exportToClipboard('netscape')}
+                className="hud-btn"
+                data-variant="success"
+                data-size="sm"
+              >
+                📋 Copy Netscape
+              </button>
+            </div>
           </div>
         </div>
 
