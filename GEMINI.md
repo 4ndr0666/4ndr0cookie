@@ -1,15 +1,15 @@
-# AGENTS.md
+# GEMINI.md
 
 ## Requirements
 
-- **All files must be explicitly cleaned of CODEX merge artifacts before any commit or pull request merge.**
-- **Use the utility: `0-tests/codex-merge-clean.sh <file ...>` to ensure no `<<<<<<<<<<<<<<<<<<<CODEX_`, `=========================`, or `>>>>>>>>>>>>>>>>>Main` blocks remain.**
+- **All files must be explicitly cleaned of any merge artifacts before any commit or pull request merge.**
+- **Use the utility: `0-tests/merge-clean.sh <file ...>` to ensure no `<<<<<<<<<<<<<<<<<<<GEMINI_`, `=========================`, or `>>>>>>>>>>>>>>>>>Main` blocks remain.**
 #
 # ```bash
 # #!/usr/bin/env bash
 # set -e
 # for f in $(git diff --cached --name-only); do
-#     [ -f "$f" ] && 0-tests/codex-merge-clean.sh "$f"
+#     [ -f "$f" ] && 0-tests/merge-clean.sh "$f"
 # done
 # git add .
 # ```
