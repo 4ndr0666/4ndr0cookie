@@ -200,6 +200,7 @@ const CookieBackupManager: React.FC = () => {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log('handleFileSelect: file selected', file);
     if (file) {
       if (!file.name.endsWith('.4nt')) {
         alert('Please select a valid .4nt backup file');
@@ -259,13 +260,19 @@ const CookieBackupManager: React.FC = () => {
             delete cookieToSet.domain;
           }
           
-          if (cookieToSet.session === true) {
-            delete cookieToSet.expirationDate;
-          }
-          
-          // Set the cookie
-          await new Promise<void>((resolve, reject) => {
-            chrome.cookies.set(cookieToSet, (result) => {
+                  if (cookie.session) {
+                    delete cookieToSet.expirationDate;
+                  }
+                  delete cookieToSet.hostOnly;
+                  delete cookieToSet.session;
+
+                  // Pass the storeId to chrome.cookies.set
+                  if (cookie.storeId) {
+                    cookieToSet.storeId = cookie.storeId;
+                  }
+                  
+                  await new Promise<void>((resolve, reject) => {
+                    chrome.cookies.set(cookieToSet, (result) => {
               if (chrome.runtime.lastError) {
                 reject(new Error(chrome.runtime.lastError.message));
               } else if (result) {
@@ -335,11 +342,7 @@ const CookieBackupManager: React.FC = () => {
             <button
               onClick={backupAllCookies}
               disabled={isBackingUp || !backupPassword.trim()}
-              className={`w-full py-3 px-4 rounded font-medium transition-colors ${
-                isBackingUp || !backupPassword.trim()
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'hover:opacity-80'
-              }`}
+              className={`w-full py-3 px-4 rounded font-medium transition-colors ${isBackingUp || !backupPassword.trim() ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'hover:opacity-80'}`}
               style={!isBackingUp && backupPassword.trim() ? {backgroundColor: '#15FFFF', color: '#111827'} : {}}
             >
               {isBackingUp ? '🔄 Creating Backup...' : '💾 One-Click Backup'}
@@ -363,38 +366,33 @@ const CookieBackupManager: React.FC = () => {
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-cyan-400 file:text-gray-900 file:font-medium hover:file:bg-cyan-300"
             />
             
-            {restoreFile && (
-              <>
-                <div className="relative">
-                  <input
-                    type={showRestorePassword ? 'text' : 'password'}
-                    value={restorePassword}
-                    onChange={(e) => setRestorePassword(e.target.value)}
-                    placeholder="Enter restore password"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowRestorePassword(!showRestorePassword)}
-                    className="absolute right-3 top-2 text-gray-400 hover:text-cyan-400"
-                  >
-                    {showRestorePassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
-                </div>
-                
-                <button
-                  onClick={restoreFromBackup}
-                  disabled={isRestoring || !restorePassword.trim()}
-                  className={`w-full py-3 px-4 rounded font-medium transition-colors ${
-                    isRestoring || !restorePassword.trim()
-                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'bg-green-600 text-white hover:bg-green-500'
-                  }`}
-                >
-                  {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
-                </button>
-              </>
-            )}
+            {/* Password input field - always visible */}
+            <div className="relative">
+              <input
+                type={showRestorePassword ? 'text' : 'password'}
+                value={restorePassword}
+                onChange={(e) => setRestorePassword(e.target.value)}
+                placeholder="Enter restore password"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowRestorePassword(!showRestorePassword)}
+                className="absolute right-3 top-2 text-gray-400 hover:text-cyan-400"
+              >
+                {showRestorePassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
+            
+            {/* Restore button - always visible, but disabled if no file or password */}
+            <button
+              onClick={restoreFromBackup}
+              disabled={isRestoring || !restoreFile || !restorePassword.trim()}
+              className={`w-full py-3 px-4 rounded font-medium transition-colors ${isRestoring || !restoreFile || !restorePassword.trim() ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
+            >
+              {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
+            </button>
+            
           </div>
           
           {isRestoring && restoreTotal > 0 && (
