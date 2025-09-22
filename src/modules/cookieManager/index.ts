@@ -6,8 +6,6 @@ export interface Cookie {
   secure: boolean;
   httpOnly: boolean;
   expirationDate?: number;
-  hostOnly?: boolean;
-  session?: boolean;
 }
 
 export class CookieManagerModule {
@@ -74,26 +72,16 @@ export class CookieManagerModule {
 
       const url = new URL(tab.url);
       const setPromises = cookiesData.map(cookie => {
-        const cookieToSet: any = {
+        return chrome.cookies.set({
           url: `${url.protocol}//${cookie.domain}${cookie.path}`,
           name: cookie.name,
           value: cookie.value,
+          domain: cookie.domain,
           path: cookie.path,
           secure: cookie.secure,
           httpOnly: cookie.httpOnly,
-          expirationDate: cookie.expirationDate,
-          domain: cookie.domain
-        };
-
-        if (cookie.hostOnly) {
-          delete cookieToSet.domain;
-        }
-
-        if (cookie.session) {
-          delete cookieToSet.expirationDate;
-        }
-
-        return chrome.cookies.set(cookieToSet);
+          expirationDate: cookie.expirationDate
+        });
       });
 
       await Promise.all(setPromises);
