@@ -1,5 +1,10 @@
 # Changelog
 
+## 2025-09-26
+- Removed intrusive `window.prompt` password requests so the Brave popup stays open and relies on the inline password field for encrypted restores.
+- Added reactive pre-decryption on password input to surface cookie counts and validation errors before running the restore loop.
+- Tightened status messaging for plaintext vs encrypted backups to align with the updated flow and avoid surprise prompts.
+
 ## 2025-09-25
 - Added interactive password prompting when encrypted backups are selected so the Brave popup no longer closes before credentials are captured.
 - Cached decrypted payloads once a password succeeds and relaxed the restore button gating, enabling replays without re-reading the file dialog.
@@ -13,3 +18,4 @@
 ## 2025-09-23
 - Improved the Brave restore workflow to prompt for missing passwords and handle plaintext backups gracefully.
 - Updated the restore UI copy to reflect automatic password prompts and the revised enablement logic.
+
