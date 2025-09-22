@@ -63,6 +63,57 @@ const CookieBackupManager: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (isRestoring) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const maybePredecrypt = async () => {
+      if (detectedEncrypted !== true || !restorePayload) {
+        return;
+      }
+
+      const password = restorePassword.trim();
+      if (!password) {
+        setParsedBackup(null);
+        setDetectedCookieCount(null);
+        setRestoreStatus('Encrypted backup detected. Enter the password below, then click "One-Click Restore".');
+        return;
+      }
+
+      try {
+        const parsed = await parseCookieBackup(restorePayload, password, true);
+        if (cancelled) {
+          return;
+        }
+        setParsedBackup({ cookies: parsed.cookies, encrypted: true, password });
+        setDetectedCookieCount(parsed.cookies.length);
+        setRestoreStatus(`Encrypted backup decrypted · ${parsed.cookies.length} cookies ready to restore.`);
+        setRestoreError((current) =>
+          current && current.toLowerCase().includes('password') ? null : current
+        );
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+        setParsedBackup(null);
+        setDetectedCookieCount(null);
+        setRestoreStatus('Encrypted backup detected. Enter the password below, then click "One-Click Restore".');
+        if (password) {
+          setRestoreError('Unable to decrypt backup with the provided password. Please re-enter it below.');
+        }
+      }
+    };
+
+    maybePredecrypt();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detectedEncrypted, restorePassword, restorePayload, isRestoring]);
+
   const loadLastBackupInfo = async () => {
     console.log('Loading last backup info...');
     try {
@@ -228,33 +279,24 @@ const CookieBackupManager: React.FC = () => {
       if (!details.encrypted) {
         setParsedBackup({ cookies: details.cookies, encrypted: false });
         setDetectedCookieCount(details.cookies.length);
+        setRestoreStatus(`Plaintext backup detected · ${details.cookies.length} cookies ready to restore.`);
       } else {
+        setParsedBackup(null);
         setDetectedCookieCount(null);
-        let passwordToUse = restorePassword.trim();
+        const passwordToUse = restorePassword.trim();
 
         if (!passwordToUse) {
-          const prompted = window.prompt('Enter the password for this encrypted backup (.4nt).') ?? '';
-          passwordToUse = prompted.trim();
-          if (passwordToUse) {
-            setRestorePassword(passwordToUse);
+          setRestoreStatus('Encrypted backup detected. Enter the password below, then click "One-Click Restore".');
+        } else {
+          try {
+            const parsed = await parseCookieBackup(details.payload, passwordToUse, true);
+            setParsedBackup({ cookies: parsed.cookies, encrypted: true, password: passwordToUse });
+            setDetectedCookieCount(parsed.cookies.length);
+            setRestoreStatus(`Encrypted backup decrypted · ${parsed.cookies.length} cookies ready to restore.`);
+          } catch (error) {
+            console.error('Failed to decrypt backup during selection:', error);
+            setRestoreError('Unable to decrypt backup with the provided password. Please re-enter it below.');
           }
-        }
-
-        if (!passwordToUse) {
-          setRestoreError('Encrypted backup selected. Enter the password to continue.');
-          return;
-        }
-
-        try {
-          const parsed = await parseCookieBackup(details.payload, passwordToUse, true);
-          setParsedBackup({ cookies: parsed.cookies, encrypted: true, password: passwordToUse });
-          setDetectedCookieCount(parsed.cookies.length);
-          setRestoreError(null);
-        } catch (error) {
-          console.error('Failed to decrypt backup during selection:', error);
-          setRestoreError('Unable to decrypt backup with the provided password.');
-          setParsedBackup(null);
-          setDetectedCookieCount(null);
         }
       }
 >>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
@@ -371,14 +413,11 @@ const CookieBackupManager: React.FC = () => {
       const needsPassword = (detectedEncrypted ?? parsedBackup?.encrypted ?? false) === true;
 
       if (needsPassword && !password) {
-        const prompted = window.prompt('Enter the password for this encrypted backup (.4nt).') ?? '';
-        password = prompted.trim();
-        if (!password) {
-          setRestoreError('Password required to decrypt encrypted backup.');
-          return;
-        }
-        setRestorePassword(password);
+        setRestoreError('Password required to decrypt encrypted backup.');
+        return;
       }
+
+      setRestoreError(null);
 
       let cookies: SerializedCookie[] | null = null;
 
@@ -401,6 +440,11 @@ const CookieBackupManager: React.FC = () => {
           });
           setDetectedEncrypted(parsed.encrypted);
           setDetectedCookieCount(parsed.cookies.length);
+          if (parsed.encrypted) {
+            setRestoreStatus(`Encrypted backup decrypted · ${parsed.cookies.length} cookies ready to restore.`);
+          } else {
+            setRestoreStatus(`Plaintext backup detected · ${parsed.cookies.length} cookies ready to restore.`);
+          }
         } catch (error) {
           if (error instanceof PasswordRequiredError) {
             setRestoreError('Password required to decrypt encrypted backup.');
@@ -668,8 +712,12 @@ const CookieBackupManager: React.FC = () => {
 =======
                 ? decryptedEncryptedCookies !== null
                   ? `Encrypted backup decrypted · ${decryptedEncryptedCookies} cookies ready to restore.`
+<<<<<<< HEAD
                   : 'Encrypted backup detected. You will be prompted for the password during restore.'
 >>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
+=======
+                  : 'Encrypted backup detected. Enter the password below, then click "One-Click Restore".'
+>>>>>>> 387e109 (Stabilize encrypted restore password flow)
                 : `Plaintext backup detected${
                     detectedPlaintextCookies !== null ? ` · ${detectedPlaintextCookies} cookies` : ''
                   }.`}
@@ -739,3 +787,4 @@ const CookieBackupManager: React.FC = () => {
 };
 
 export default CookieBackupManager;
+
