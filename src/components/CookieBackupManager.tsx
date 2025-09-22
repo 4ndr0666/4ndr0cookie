@@ -13,6 +13,7 @@ interface BackupStats {
 type SerializedCookie = chrome.cookies.Cookie;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 interface ParsedBackupState {
   cookies: SerializedCookie[];
@@ -22,6 +23,8 @@ interface ParsedBackupState {
 
 >>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
 >>>>>>> 14394d4 (Enable interactive encrypted cookie restore)
+=======
+>>>>>>> b6bb0e1 (New Branch Codefix)
 const CookieBackupManager: React.FC = () => {
   console.log('CookieBackupManager component rendering...');
   const [isBackingUp, setIsBackingUp] = useState(false);
@@ -35,10 +38,13 @@ const CookieBackupManager: React.FC = () => {
 =======
   const [restorePayload, setRestorePayload] = useState<string | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [parsedBackup, setParsedBackup] = useState<ParsedBackupState | null>(null);
 >>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
 >>>>>>> 14394d4 (Enable interactive encrypted cookie restore)
+=======
+>>>>>>> b6bb0e1 (New Branch Codefix)
   const [lastBackup, setLastBackup] = useState<BackupStats | null>(null);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const [restoreTotal, setRestoreTotal] = useState(0);
@@ -77,7 +83,6 @@ const CookieBackupManager: React.FC = () => {
 
       const password = restorePassword.trim();
       if (!password) {
-        setParsedBackup(null);
         setDetectedCookieCount(null);
         setRestoreStatus('Encrypted backup detected. Enter the password below, then click "One-Click Restore".');
         return;
@@ -88,7 +93,6 @@ const CookieBackupManager: React.FC = () => {
         if (cancelled) {
           return;
         }
-        setParsedBackup({ cookies: parsed.cookies, encrypted: true, password });
         setDetectedCookieCount(parsed.cookies.length);
         setRestoreStatus(`Encrypted backup decrypted · ${parsed.cookies.length} cookies ready to restore.`);
         setRestoreError((current) =>
@@ -98,7 +102,6 @@ const CookieBackupManager: React.FC = () => {
         if (cancelled) {
           return;
         }
-        setParsedBackup(null);
         setDetectedCookieCount(null);
         setRestoreStatus('Encrypted backup detected. Enter the password below, then click "One-Click Restore".');
         if (password) {
@@ -207,18 +210,20 @@ const CookieBackupManager: React.FC = () => {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('File selected...');
 =======
 <<<<<<< HEAD
   const inspectBackupPayload = (payload: string) => {
 =======
+=======
+>>>>>>> b6bb0e1 (New Branch Codefix)
   type InspectedBackup =
     | { payload: string; encrypted: false; cookies: SerializedCookie[] }
     | { payload: string; encrypted: true; cookies: null };
 
   const inspectBackupPayload = (payload: string): InspectedBackup => {
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
     const trimmed = payload.trim();
     if (!trimmed) {
       throw new Error('Backup file is empty');
@@ -226,22 +231,14 @@ const CookieBackupManager: React.FC = () => {
 
     if (trimmed.startsWith('[')) {
       const cookies = parseSerializedCookies(trimmed);
-<<<<<<< HEAD
-      return { payload: trimmed, encrypted: false, cookieCount: cookies.length };
-=======
       return { payload: trimmed, encrypted: false, cookies };
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
     }
 
     if (isLikelyEncryptedPayload(trimmed)) {
       return {
         payload: normalizeEncryptedPayload(trimmed),
         encrypted: true,
-<<<<<<< HEAD
-        cookieCount: null
-=======
         cookies: null
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
       };
     }
 
@@ -254,10 +251,6 @@ const CookieBackupManager: React.FC = () => {
     setDetectedEncrypted(null);
     setDetectedCookieCount(null);
     setRestorePayload(null);
-<<<<<<< HEAD
-=======
-    setParsedBackup(null);
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
 
 >>>>>>> 14394d4 (Enable interactive encrypted cookie restore)
     const file = event.target.files?.[0];
@@ -272,16 +265,11 @@ const CookieBackupManager: React.FC = () => {
 =======
       setRestorePayload(details.payload);
       setDetectedEncrypted(details.encrypted);
-<<<<<<< HEAD
-      setDetectedCookieCount(details.cookieCount);
-=======
 
       if (!details.encrypted) {
-        setParsedBackup({ cookies: details.cookies, encrypted: false });
         setDetectedCookieCount(details.cookies.length);
         setRestoreStatus(`Plaintext backup detected · ${details.cookies.length} cookies ready to restore.`);
       } else {
-        setParsedBackup(null);
         setDetectedCookieCount(null);
         const passwordToUse = restorePassword.trim();
 
@@ -290,7 +278,6 @@ const CookieBackupManager: React.FC = () => {
         } else {
           try {
             const parsed = await parseCookieBackup(details.payload, passwordToUse, true);
-            setParsedBackup({ cookies: parsed.cookies, encrypted: true, password: passwordToUse });
             setDetectedCookieCount(parsed.cookies.length);
             setRestoreStatus(`Encrypted backup decrypted · ${parsed.cookies.length} cookies ready to restore.`);
           } catch (error) {
@@ -299,7 +286,6 @@ const CookieBackupManager: React.FC = () => {
           }
         }
       }
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
     } catch (error) {
       console.error('Failed to read backup file:', error);
       setRestoreFile(null);
@@ -328,6 +314,7 @@ const CookieBackupManager: React.FC = () => {
     try {
       const fileContent = await restoreFile.text();
 
+<<<<<<< HEAD
 <<<<<<< HEAD
       if (workerRef.current) {
         workerRef.current.onmessage = async (event) => {
@@ -388,6 +375,8 @@ const CookieBackupManager: React.FC = () => {
                 setRestoreProgress(i + 1);
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> b6bb0e1 (New Branch Codefix)
       const password = restorePassword.trim();
       let cookiesResult: { cookies: SerializedCookie[]; encrypted: boolean } | null = null;
 
@@ -408,58 +397,6 @@ const CookieBackupManager: React.FC = () => {
       const { cookies } = cookiesResult;
 
       if (!cookies.length) {
-=======
-      let password = restorePassword.trim();
-      const needsPassword = (detectedEncrypted ?? parsedBackup?.encrypted ?? false) === true;
-
-      if (needsPassword && !password) {
-        setRestoreError('Password required to decrypt encrypted backup.');
-        return;
-      }
-
-      setRestoreError(null);
-
-      let cookies: SerializedCookie[] | null = null;
-
-      if (parsedBackup) {
-        if (!parsedBackup.encrypted) {
-          cookies = parsedBackup.cookies;
-        } else if (password && parsedBackup.password === password) {
-          cookies = parsedBackup.cookies;
-        }
-      }
-
-      if (!cookies) {
-        try {
-          const parsed = await parseCookieBackup(restorePayload, password, detectedEncrypted ?? needsPassword);
-          cookies = parsed.cookies;
-          setParsedBackup({
-            cookies: parsed.cookies,
-            encrypted: parsed.encrypted,
-            password: parsed.encrypted ? password : undefined
-          });
-          setDetectedEncrypted(parsed.encrypted);
-          setDetectedCookieCount(parsed.cookies.length);
-          if (parsed.encrypted) {
-            setRestoreStatus(`Encrypted backup decrypted · ${parsed.cookies.length} cookies ready to restore.`);
-          } else {
-            setRestoreStatus(`Plaintext backup detected · ${parsed.cookies.length} cookies ready to restore.`);
-          }
-        } catch (error) {
-          if (error instanceof PasswordRequiredError) {
-            setRestoreError('Password required to decrypt encrypted backup.');
-            return;
-          }
-          if (error instanceof Error) {
-            setRestoreError(error.message || 'Unable to restore backup file.');
-            return;
-          }
-          throw error;
-        }
-      }
-
-      if (!cookies || !cookies.length) {
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
         setRestoreError('Backup file does not contain any cookies to restore.');
         return;
       }
@@ -536,10 +473,6 @@ const CookieBackupManager: React.FC = () => {
       setRestorePayload(null);
       setDetectedEncrypted(null);
       setDetectedCookieCount(null);
-<<<<<<< HEAD
-=======
-      setParsedBackup(null);
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
 
       const summary = `Restore complete!\nRestored: ${restored} cookies\nFailed: ${failed} cookies`;
       setRestoreStatus(summary.replace(/\n/g, ' '));
@@ -556,14 +489,13 @@ const CookieBackupManager: React.FC = () => {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> b6bb0e1 (New Branch Codefix)
   const requiresRestorePassword = detectedEncrypted === true && !restorePassword.trim();
   const detectedPlaintextCookies = detectedEncrypted === false ? detectedCookieCount : null;
-=======
-  const detectedPlaintextCookies = detectedEncrypted === false ? detectedCookieCount : null;
-  const decryptedEncryptedCookies = detectedEncrypted === true ? detectedCookieCount : null;
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
 
 >>>>>>> 14394d4 (Enable interactive encrypted cookie restore)
   return (
@@ -680,24 +612,10 @@ const CookieBackupManager: React.FC = () => {
               onClick={restoreFromBackup}
               disabled={
                 isRestoring ||
-<<<<<<< HEAD
                 !restoreFile ||
                 requiresRestorePassword
               }
-              className={`w-full py-3 px-4 rounded font-medium transition-colors ${
-                isRestoring ||
-                !restoreFile ||
-                requiresRestorePassword
-=======
-                !restoreFile
-              }
-              className={`w-full py-3 px-4 rounded font-medium transition-colors ${
-                isRestoring ||
-                !restoreFile
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-500'
-              }`}
+              className={`w-full py-3 px-4 rounded font-medium transition-colors ${isRestoring || !restoreFile || requiresRestorePassword ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
             >
               {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
             </button>
@@ -707,20 +625,8 @@ const CookieBackupManager: React.FC = () => {
           {detectedEncrypted !== null && (
             <p className="text-xs text-gray-400">
               {detectedEncrypted
-<<<<<<< HEAD
-                ? 'Encrypted backup detected. Enter the password before restoring.'
-=======
-                ? decryptedEncryptedCookies !== null
-                  ? `Encrypted backup decrypted · ${decryptedEncryptedCookies} cookies ready to restore.`
-<<<<<<< HEAD
-                  : 'Encrypted backup detected. You will be prompted for the password during restore.'
->>>>>>> 2d6393e (Enable interactive encrypted cookie restore)
-=======
-                  : 'Encrypted backup detected. Enter the password below, then click "One-Click Restore".'
->>>>>>> 387e109 (Stabilize encrypted restore password flow)
-                : `Plaintext backup detected${
-                    detectedPlaintextCookies !== null ? ` · ${detectedPlaintextCookies} cookies` : ''
-                  }.`}
+                ? 'Encrypted backup detected. Enter the password below, then click "One-Click Restore".'
+                : `Plaintext backup detected${detectedPlaintextCookies !== null ? ` · ${detectedPlaintextCookies} cookies` : ''}.`}
             </p>
           )}
 
@@ -787,4 +693,3 @@ const CookieBackupManager: React.FC = () => {
 };
 
 export default CookieBackupManager;
-
