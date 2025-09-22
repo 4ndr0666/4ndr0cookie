@@ -503,5 +503,3 @@ const CookieBackupManager: React.FC = () => {
 };
 
 export default CookieBackupManager;
-
-
