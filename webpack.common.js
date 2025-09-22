@@ -37,6 +37,10 @@ module.exports = {
           noErrorOnMissing: true,
         },
         {
+          from: path.resolve('src/utils/sjcl.js'),
+          to: path.resolve('dist/src/utils/sjcl.js'),
+        },
+        {
             from: path.resolve('manifest.json'),
             to: path.resolve('dist'),
         }
