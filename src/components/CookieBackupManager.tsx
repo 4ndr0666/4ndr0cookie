@@ -288,7 +288,6 @@ const CookieBackupManager: React.FC = () => {
 
     try {
       const cookies = await parseCookieBackup(restoreFile, restorePassword);
-
       setRestoreTotal(cookies.length);
       let restored = 0;
       let failed = 0;
