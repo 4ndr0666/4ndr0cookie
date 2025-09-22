@@ -63,41 +63,31 @@ const CookieBackupManager: React.FC = () => {
   };
 
   const backupAllCookies = async () => {
-    console.log('backupAllCookies: function started');
     if (!backupPassword.trim()) {
       alert('Please enter a backup password');
-      console.log('backupAllCookies: no backup password entered, returning');
       return;
     }
 
     setIsBackingUp(true);
-    console.log('backupAllCookies: setIsBackingUp(true)');
     
     try {
-      console.log('backupAllCookies: calling chrome.cookies.getAll({})');
       const cookies = await chrome.cookies.getAll({});
-      console.log(`backupAllCookies: received ${cookies.length} cookies`);
       if (cookies.length === 0) {
         alert('No cookies found to backup');
         setIsBackingUp(false);
-        console.log('backupAllCookies: no cookies found, setting setIsBackingUp(false) and returning');
         return;
       }
 
       const cookieData = JSON.stringify(cookies, null, 2);
-      console.log('backupAllCookies: cookie data stringified');
 
       if (workerRef.current) {
-        console.log('backupAllCookies: posting encrypt message to worker');
         workerRef.current.onmessage = (event) => {
           const { status, result, message } = event.data;
           if (status === 'success') {
-            console.log('backupAllCookies: worker encryption successful');
             const encryptedData = result;
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const filename = `4ndr0tools-cookies-${timestamp}.4nt`;
             
-            console.log('backupAllCookies: creating blob and URL for download');
             const blob = new Blob([encryptedData], { type: 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
             
@@ -107,7 +97,6 @@ const CookieBackupManager: React.FC = () => {
             link.click();
             
             URL.revokeObjectURL(url);
-            console.log('backupAllCookies: download initiated');
             
             const stats: BackupStats = {
               totalCookies: cookies.length,
@@ -115,24 +104,20 @@ const CookieBackupManager: React.FC = () => {
               encrypted: true
             };
             
-            console.log('backupAllCookies: saving last backup info');
             saveLastBackupInfo(stats);
             setBackupPassword('');
             alert(`Successfully backed up ${cookies.length} cookies!`);
-            console.log('backupAllCookies: backup process completed successfully');
           } else {
-            console.error('backupAllCookies: worker encryption failed:', message);
+            console.error('Backup error:', message);
             alert('Backup failed: ' + message);
           }
           setIsBackingUp(false);
-          console.log('backupAllCookies: setIsBackingUp(false) after worker message');
         };
 
         workerRef.current.onerror = (error) => {
-            console.error('backupAllCookies: worker error during encryption:', error);
+            console.error('Worker error:', error);
             alert('Backup failed: Worker error');
             setIsBackingUp(false);
-            console.log('backupAllCookies: setIsBackingUp(false) after worker error');
         };
 
         workerRef.current.postMessage({
@@ -140,83 +125,63 @@ const CookieBackupManager: React.FC = () => {
           data: cookieData,
           password: backupPassword
         });
-      } else {
-        console.error('backupAllCookies: workerRef.current is null, worker not initialized');
-        alert('Backup failed: Worker not initialized.');
-        setIsBackingUp(false);
       }
     } catch (error) {
-      console.error('backupAllCookies: outer try-catch error:', error);
+      console.error('Backup error:', error);
       alert('Backup failed: ' + (error as Error).message);
       setIsBackingUp(false);
-    } finally {
-      console.log('backupAllCookies: function finished (outer finally block)');
     }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('handleFileSelect: function started');
+    console.log('File selected...');
     const file = event.target.files?.[0];
-    console.log('handleFileSelect: file selected', file);
     if (file) {
       if (!file.name.endsWith('.4nt')) {
         alert('Please select a valid .4nt backup file');
         return;
       }
-      console.log('handleFileSelect: setting restore file', file.name);
+      console.log('Setting restore file:', file.name);
       setRestoreFile(file);
     }
-    console.log('handleFileSelect: function finished');
   };
 
   const restoreFromBackup = async () => {
-    console.log('restoreFromBackup: function started');
     if (!restoreFile) {
       alert('Please select a backup file');
-      console.log('restoreFromBackup: no restore file selected, returning');
       return;
     }
     
     if (!restorePassword.trim()) {
       alert('Please enter the restore password');
-      console.log('restoreFromBackup: no restore password entered, returning');
       return;
     }
 
     setIsRestoring(true);
     setRestoreProgress(0);
-    console.log('restoreFromBackup: setIsRestoring(true) and progress reset');
     
     try {
-      console.log('restoreFromBackup: reading file content from restoreFile');
       const fileContent = await restoreFile.text();
-      console.log(`restoreFromBackup: file content read, length: ${fileContent.length}`);
 
       if (workerRef.current) {
-        console.log('restoreFromBackup: posting decrypt message to worker');
         workerRef.current.onmessage = async (event) => {
           const { status, result, message } = event.data;
           if (status === 'success') {
-            console.log('restoreFromBackup: worker decryption successful');
             try {
               const decryptedData = result;
-              console.log('restoreFromBackup: parsing decrypted JSON data');
               const cookies = JSON.parse(decryptedData);
-              console.log(`restoreFromBackup: parsed ${cookies.length} cookies`);
               
               setRestoreTotal(cookies.length);
               let restored = 0;
               let failed = 0;
               
               const currentTime = Date.now() / 1000;
-              console.log('restoreFromBackup: starting cookie restoration loop');
+              
               for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i];
-                console.log(`restoreFromBackup: processing cookie ${i + 1}/${cookies.length} - ${cookie.name}`);
                 
                 try {
                   if (cookie.expirationDate && currentTime > cookie.expirationDate) {
-                    console.log(`restoreFromBackup: skipping expired cookie ${cookie.name}`);
                     continue;
                   }
                   
@@ -235,19 +200,15 @@ const CookieBackupManager: React.FC = () => {
                   delete cookieToSet.hostOnly;
                   delete cookieToSet.session;
                   
-                  console.log(`restoreFromBackup: attempting to set cookie ${cookie.name}`);
                   await new Promise<void>((resolve, reject) => {
                     chrome.cookies.set(cookieToSet, (result) => {
                       if (chrome.runtime.lastError) {
-                        console.error(`restoreFromBackup: error setting cookie ${cookie.name}:`, chrome.runtime.lastError.message);
                         reject(new Error(chrome.runtime.lastError.message));
                       } else if (result) {
                         restored++;
-                        console.log(`restoreFromBackup: cookie ${cookie.name} set successfully`);
                         resolve();
                       } else {
                         failed++;
-                        console.warn(`restoreFromBackup: cookie ${cookie.name} failed to set (no error, no result)`);
                         resolve();
                       }
                     });
@@ -255,44 +216,39 @@ const CookieBackupManager: React.FC = () => {
                   
                 } catch (error) {
                   failed++;
-                  console.error('restoreFromBackup: Error restoring cookie in loop:', error);
+                  console.error('Error restoring cookie:', error);
                 }
                 
                 setRestoreProgress(i + 1);
               }
-              console.log('restoreFromBackup: cookie restoration loop finished');
               
               setRestorePassword('');
               setRestoreFile(null);
               
               alert(`Restore complete!\nRestored: ${restored} cookies\nFailed: ${failed} cookies`);
-              console.log(`restoreFromBackup: restore summary - Restored: ${restored}, Failed: ${failed}`);
             } catch (error) {
-                console.error('restoreFromBackup: Error during post-decryption processing:', error);
+                console.error('Restore error:', error);
                 alert('Restore failed: ' + (error as Error).message);
             } finally {
                 setIsRestoring(false);
                 setRestoreProgress(0);
                 setRestoreTotal(0);
-                console.log('restoreFromBackup: setIsRestoring(false), progress reset after worker success');
             }
           } else {
-            console.error('restoreFromBackup: worker decryption failed:', message);
+            console.error('Restore error:', message);
             alert('Restore failed: ' + message);
             setIsRestoring(false);
             setRestoreProgress(0);
             setRestoreTotal(0);
-            console.log('restoreFromBackup: setIsRestoring(false), progress reset after worker error');
           }
         };
 
         workerRef.current.onerror = (error) => {
-            console.error('restoreFromBackup: worker error during decryption:', error);
+            console.error('Worker error:', error);
             alert('Restore failed: Worker error');
             setIsRestoring(false);
             setRestoreProgress(0);
             setRestoreTotal(0);
-            console.log('restoreFromBackup: setIsRestoring(false), progress reset after worker error');
         };
 
         workerRef.current.postMessage({
@@ -300,21 +256,13 @@ const CookieBackupManager: React.FC = () => {
           data: fileContent,
           password: restorePassword
         });
-      } else {
-        console.error('restoreFromBackup: workerRef.current is null, worker not initialized');
-        alert('Restore failed: Worker not initialized.');
-        setIsRestoring(false);
-        setRestoreProgress(0);
-        setRestoreTotal(0);
       }
     } catch (error) {
-      console.error('restoreFromBackup: outer try-catch error:', error);
+      console.error('Restore error:', error);
       alert('Restore failed: ' + (error as Error).message);
       setIsRestoring(false);
       setRestoreProgress(0);
       setRestoreTotal(0);
-    } finally {
-      console.log('restoreFromBackup: function finished (outer finally block)');
     }
   };
 
@@ -447,7 +395,9 @@ const CookieBackupManager: React.FC = () => {
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
           <h3 className="text-md font-medium text-cyan-400 mb-2">Security Features</h3>
           <ul className="text-sm text-gray-400 space-y-1">
-            <li>• AES-256-CCM encryption with SJCL library</li>
+            <li>• AES-256-GCM encryption with Web Crypto API</li>
+            <li>• PBKDF2 key derivation (100,000 iterations)</li>
+            <li>• Random salt and IV for each backup</li>
             <li>• Custom .4nt file format</li>
             <li>• No password storage or transmission</li>
           </ul>
