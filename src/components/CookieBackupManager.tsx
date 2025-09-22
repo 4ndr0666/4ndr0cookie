@@ -204,11 +204,37 @@ const CookieBackupManager: React.FC = () => {
     const file = event.target.files?.[0];
     console.log('handleFileSelect: file selected', file);
     if (file) {
-      if (!file.name.endsWith('.4nt')) {
-        alert('Please select a valid .4nt backup file');
-        return;
-      }
       setRestoreFile(file);
+    }
+  };
+
+  const parseCookieBackup = async (
+    file: File,
+    password: string
+  ): Promise<SerializedCookie[]> => {
+    const fileContent = await file.text();
+
+    const parseCookies = (raw: string): SerializedCookie[] => {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        throw new Error('Backup file does not contain a cookie list');
+      }
+      return parsed as SerializedCookie[];
+    };
+
+    try {
+      const decryptedData = await decryptData(fileContent, password);
+      return parseCookies(decryptedData);
+    } catch (error) {
+      try {
+        const cookies = parseCookies(fileContent);
+        console.warn('parseCookieBackup: falling back to plaintext restore');
+        return cookies;
+      } catch {
+        throw error instanceof Error
+          ? error
+          : new Error('Unable to restore backup file');
+      }
     }
   };
 
@@ -231,7 +257,7 @@ const CookieBackupManager: React.FC = () => {
       details.domain = cookie.domain;
     }
 
-    if (cookie.sameSite) {
+    if (cookie.sameSite && cookie.sameSite !== 'unspecified') {
       details.sameSite = cookie.sameSite;
     }
 
@@ -261,10 +287,7 @@ const CookieBackupManager: React.FC = () => {
     setRestoreProgress(0);
 
     try {
-      const fileContent = await restoreFile.text();
-      const decryptedData = await decryptData(fileContent, restorePassword);
-      const cookies = JSON.parse(decryptedData) as SerializedCookie[];
-
+      const cookies = await parseCookieBackup(restoreFile, restorePassword);
       setRestoreTotal(cookies.length);
       let restored = 0;
       let failed = 0;
@@ -361,7 +384,7 @@ const CookieBackupManager: React.FC = () => {
           </div>
 
           <p className="text-xs text-gray-500 mt-2">
-            Creates an encrypted .4nt file with all cookies from all domains
+            Creates an encrypted backup file (.4nt by default) with all cookies from all domains
           </p>
         </div>
 
@@ -372,7 +395,7 @@ const CookieBackupManager: React.FC = () => {
           <div className="space-y-3">
             <input
               type="file"
-              accept=".4nt"
+              accept=".4nt,.json,.txt,.bak"
               onChange={handleFileSelect}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-cyan-400 file:text-gray-900 file:font-medium hover:file:bg-cyan-300"
             />
@@ -422,7 +445,7 @@ const CookieBackupManager: React.FC = () => {
           )}
 
           <p className="text-xs text-gray-500 mt-2">
-            Restores encrypted .4nt backup files. Skips expired cookies automatically.
+            Restores encrypted or plaintext backup files (.4nt, .json, .txt). Skips expired cookies automatically.
           </p>
         </div>
 
