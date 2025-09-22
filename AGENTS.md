@@ -3,7 +3,7 @@
 ## Requirements
 
 - **All files must be explicitly cleaned of any merge artifacts before any commit or pull request merge.**
-- **Use the utility: `0-tests/merge-clean.sh <file ...>` to ensure no `<<<<<<<<<<<<<<<<<<<GEMINI_`, `=========================`, or `>>>>>>>>>>>>>>>>>Main` blocks remain.**
+- **Use the utility: `0-tests/merge-clean.sh <file ...>` to ensure no `<<<<<<<<<<<<<<<<<<<CODEX_`, `=========================`, or `>>>>>>>>>>>>>>>>>Main` blocks remain.**
 
   ```bash
   #!/usr/bin/env bash
