@@ -6,6 +6,8 @@ interface BackupStats {
   encrypted: boolean;
 }
 
+type SerializedCookie = chrome.cookies.Cookie;
+
 const CookieBackupManager: React.FC = () => {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -46,10 +48,10 @@ const CookieBackupManager: React.FC = () => {
   const encryptData = async (data: string, password: string): Promise<string> => {
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(data);
-    
+
     // Generate a random salt
     const salt = crypto.getRandomValues(new Uint8Array(16));
-    
+
     // Derive key from password
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
@@ -58,7 +60,7 @@ const CookieBackupManager: React.FC = () => {
       false,
       ['deriveBits', 'deriveKey']
     );
-    
+
     const key = await crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
@@ -71,23 +73,23 @@ const CookieBackupManager: React.FC = () => {
       false,
       ['encrypt']
     );
-    
+
     // Generate random IV
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    
+
     // Encrypt data
     const encryptedBuffer = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv: iv },
       key,
       dataBuffer
     );
-    
+
     // Combine salt, iv, and encrypted data
     const resultBuffer = new Uint8Array(salt.length + iv.length + encryptedBuffer.byteLength);
     resultBuffer.set(salt, 0);
     resultBuffer.set(iv, salt.length);
     resultBuffer.set(new Uint8Array(encryptedBuffer), salt.length + iv.length);
-    
+
     // Convert to base64
     return btoa(String.fromCharCode.apply(null, Array.from(resultBuffer)));
   };
@@ -96,19 +98,19 @@ const CookieBackupManager: React.FC = () => {
     try {
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
-      
+
       // Convert from base64
       const binaryString = atob(encryptedData);
       const encryptedBuffer = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         encryptedBuffer[i] = binaryString.charCodeAt(i);
       }
-      
+
       // Extract salt, iv, and encrypted data
       const salt = encryptedBuffer.slice(0, 16);
       const iv = encryptedBuffer.slice(16, 28);
       const encrypted = encryptedBuffer.slice(28);
-      
+
       // Derive key from password
       const keyMaterial = await crypto.subtle.importKey(
         'raw',
@@ -117,7 +119,7 @@ const CookieBackupManager: React.FC = () => {
         false,
         ['deriveBits', 'deriveKey']
       );
-      
+
       const key = await crypto.subtle.deriveKey(
         {
           name: 'PBKDF2',
@@ -130,14 +132,14 @@ const CookieBackupManager: React.FC = () => {
         false,
         ['decrypt']
       );
-      
+
       // Decrypt data
       const decryptedBuffer = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv: iv },
         key,
         encrypted
       );
-      
+
       return decoder.decode(decryptedBuffer);
     } catch (error) {
       throw new Error('Decryption failed - incorrect password or corrupted file');
@@ -154,7 +156,7 @@ const CookieBackupManager: React.FC = () => {
     try {
       // Get all cookies from all domains
       const cookies = await chrome.cookies.getAll({});
-      
+
       if (cookies.length === 0) {
         alert('No cookies found to backup');
         return;
@@ -162,34 +164,34 @@ const CookieBackupManager: React.FC = () => {
 
       const cookieData = JSON.stringify(cookies, null, 2);
       const encryptedData = await encryptData(cookieData, backupPassword);
-      
+
       // Create filename with timestamp
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `4ndr0tools-cookies-${timestamp}.4nt`;
-      
+
       // Download encrypted file
       const blob = new Blob([encryptedData], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
       link.click();
-      
+
       URL.revokeObjectURL(url);
-      
+
       // Save backup stats
       const stats: BackupStats = {
         totalCookies: cookies.length,
         timestamp: Date.now(),
         encrypted: true
       };
-      
+
       await saveLastBackupInfo(stats);
       setBackupPassword('');
-      
+
       alert(`Successfully backed up ${cookies.length} cookies!`);
-      
+
     } catch (error) {
       console.error('Backup error:', error);
       alert('Backup failed: ' + (error as Error).message);
@@ -210,12 +212,46 @@ const CookieBackupManager: React.FC = () => {
     }
   };
 
+  const buildCookieSetDetails = (cookie: SerializedCookie): chrome.cookies.SetDetails => {
+    const protocol = cookie.secure ? 'https:' : 'http:';
+    const normalizedDomain = cookie.domain.startsWith('.')
+      ? cookie.domain.slice(1)
+      : cookie.domain;
+
+    const details: chrome.cookies.SetDetails = {
+      url: `${protocol}//${normalizedDomain}${cookie.path}`,
+      name: cookie.name,
+      value: cookie.value,
+      path: cookie.path,
+      secure: cookie.secure,
+      httpOnly: cookie.httpOnly
+    };
+
+    if (!cookie.hostOnly && cookie.domain) {
+      details.domain = cookie.domain;
+    }
+
+    if (cookie.sameSite) {
+      details.sameSite = cookie.sameSite;
+    }
+
+    if (!cookie.session && cookie.expirationDate) {
+      details.expirationDate = cookie.expirationDate;
+    }
+
+    if (cookie.storeId) {
+      details.storeId = cookie.storeId;
+    }
+
+    return details;
+  };
+
   const restoreFromBackup = async () => {
     if (!restoreFile) {
       alert('Please select a backup file');
       return;
     }
-    
+
     if (!restorePassword.trim()) {
       alert('Please enter the restore password');
       return;
@@ -223,56 +259,31 @@ const CookieBackupManager: React.FC = () => {
 
     setIsRestoring(true);
     setRestoreProgress(0);
-    
+
     try {
       const fileContent = await restoreFile.text();
       const decryptedData = await decryptData(fileContent, restorePassword);
-      const cookies = JSON.parse(decryptedData);
-      
+      const cookies = JSON.parse(decryptedData) as SerializedCookie[];
+
       setRestoreTotal(cookies.length);
       let restored = 0;
       let failed = 0;
-      
+
       const currentTime = Date.now() / 1000;
-      
+
       for (let i = 0; i < cookies.length; i++) {
         const cookie = cookies[i];
-        
+
         try {
           // Skip expired cookies
           if (cookie.expirationDate && currentTime > cookie.expirationDate) {
             continue;
           }
-          
-          // Prepare cookie for restoration
-          const cookieToSet = { ...cookie };
-          
-          // Build URL
-          const protocol = cookie.secure ? 'https:' : 'http:';
-          const domain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
-          cookieToSet.url = `${protocol}//${domain}${cookie.path}`;
-          
-          // Remove properties that chrome.cookies.set doesn't accept
-          delete cookieToSet.hostOnly;
-          delete cookieToSet.session;
-          
-          if (cookieToSet.hostOnly === true) {
-            delete cookieToSet.domain;
-          }
-          
-                  if (cookie.session) {
-                    delete cookieToSet.expirationDate;
-                  }
-                  delete cookieToSet.hostOnly;
-                  delete cookieToSet.session;
 
-                  // Pass the storeId to chrome.cookies.set
-                  if (cookie.storeId) {
-                    cookieToSet.storeId = cookie.storeId;
-                  }
-                  
-                  await new Promise<void>((resolve, reject) => {
-                    chrome.cookies.set(cookieToSet, (result) => {
+          const cookieToSet = buildCookieSetDetails(cookie);
+
+          await new Promise<void>((resolve, reject) => {
+            chrome.cookies.set(cookieToSet, (result) => {
               if (chrome.runtime.lastError) {
                 reject(new Error(chrome.runtime.lastError.message));
               } else if (result) {
@@ -284,20 +295,20 @@ const CookieBackupManager: React.FC = () => {
               }
             });
           });
-          
+
         } catch (error) {
           failed++;
           console.error('Error restoring cookie:', error);
         }
-        
+
         setRestoreProgress(i + 1);
       }
-      
+
       setRestorePassword('');
       setRestoreFile(null);
-      
+
       alert(`Restore complete!\nRestored: ${restored} cookies\nFailed: ${failed} cookies`);
-      
+
     } catch (error) {
       console.error('Restore error:', error);
       alert('Restore failed: ' + (error as Error).message);
@@ -320,7 +331,7 @@ const CookieBackupManager: React.FC = () => {
         {/* Backup Section */}
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
           <h3 className="text-md font-medium text-cyan-400 mb-4">System-wide Backup</h3>
-          
+
           <div className="space-y-3">
             <div className="relative">
               <input
@@ -338,7 +349,7 @@ const CookieBackupManager: React.FC = () => {
                 {showBackupPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            
+
             <button
               onClick={backupAllCookies}
               disabled={isBackingUp || !backupPassword.trim()}
@@ -348,7 +359,7 @@ const CookieBackupManager: React.FC = () => {
               {isBackingUp ? '🔄 Creating Backup...' : '💾 One-Click Backup'}
             </button>
           </div>
-          
+
           <p className="text-xs text-gray-500 mt-2">
             Creates an encrypted .4nt file with all cookies from all domains
           </p>
@@ -357,7 +368,7 @@ const CookieBackupManager: React.FC = () => {
         {/* Restore Section */}
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
           <h3 className="text-md font-medium text-cyan-400 mb-4">Restore from Backup</h3>
-          
+
           <div className="space-y-3">
             <input
               type="file"
@@ -365,7 +376,7 @@ const CookieBackupManager: React.FC = () => {
               onChange={handleFileSelect}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-cyan-400 file:text-gray-900 file:font-medium hover:file:bg-cyan-300"
             />
-            
+
             {/* Password input field - always visible */}
             <div className="relative">
               <input
@@ -383,7 +394,7 @@ const CookieBackupManager: React.FC = () => {
                 {showRestorePassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            
+
             {/* Restore button - always visible, but disabled if no file or password */}
             <button
               onClick={restoreFromBackup}
@@ -392,9 +403,9 @@ const CookieBackupManager: React.FC = () => {
             >
               {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
             </button>
-            
+
           </div>
-          
+
           {isRestoring && restoreTotal > 0 && (
             <div className="mt-4">
               <div className="flex justify-between text-sm text-gray-400 mb-1">
@@ -402,14 +413,14 @@ const CookieBackupManager: React.FC = () => {
                 <span>{restoreProgress} / {restoreTotal}</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
+                <div
                   className="bg-cyan-400 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${(restoreProgress / restoreTotal) * 100}%` }}
                 />
               </div>
             </div>
           )}
-          
+
           <p className="text-xs text-gray-500 mt-2">
             Restores encrypted .4nt backup files. Skips expired cookies automatically.
           </p>
@@ -449,3 +460,4 @@ const CookieBackupManager: React.FC = () => {
 };
 
 export default CookieBackupManager;
+
