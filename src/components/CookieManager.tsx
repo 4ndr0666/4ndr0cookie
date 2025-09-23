@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-interface Cookie {
-  name: string;
-  value: string;
-  domain: string;
-  path: string;
-  secure: boolean;
-  httpOnly: boolean;
-  expirationDate?: number;
-}
+import { Cookie, CookieManagerModule } from '../modules/cookieManager';
 
 const CookieManager: React.FC = () => {
   const [cookies, setCookies] = useState<Cookie[]>([]);
@@ -21,12 +13,8 @@ const CookieManager: React.FC = () => {
 
   const loadCookies = async () => {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab.url) {
-        const url = new URL(tab.url);
-        const siteCookies = await chrome.cookies.getAll({ domain: url.hostname });
-        setCookies(siteCookies);
-      }
+      const siteCookies = await CookieManagerModule.getCookiesForCurrentTab();
+      setCookies(siteCookies);
     } catch (error) {
       console.error('Error loading cookies:', error);
     } finally {
@@ -36,30 +24,15 @@ const CookieManager: React.FC = () => {
 
   const deleteCookie = async (cookie: Cookie) => {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab.url) {
-        const url = new URL(tab.url);
-        await chrome.cookies.remove({
-          url: `${url.protocol}//${cookie.domain}${cookie.path}`,
-          name: cookie.name
-        });
-        await loadCookies();
-      }
+      await CookieManagerModule.deleteCookie(cookie);
+      await loadCookies();
     } catch (error) {
       console.error('Error deleting cookie:', error);
     }
   };
 
   const exportCookiesJSON = () => {
-    const dataStr = JSON.stringify(cookies, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `cookies_${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    CookieManagerModule.exportCookies(cookies);
   };
 
   const exportToClipboard = async (format: 'json' | 'netscape') => {
@@ -93,7 +66,7 @@ const CookieManager: React.FC = () => {
       const button = document.activeElement as HTMLButtonElement;
       const originalText = button.textContent;
       button.textContent = '✅ Copied!';
-      button.style.backgroundColor = '#10B981';
+      button.style.backgroundColor = '#10B980';
       
       setTimeout(() => {
         button.textContent = originalText;
@@ -102,6 +75,26 @@ const CookieManager: React.FC = () => {
       
     } catch (error) {
       console.error('Error copying to clipboard:', error);
+    }
+  };
+
+  const handleImportCookies = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const content = e.target?.result as string;
+          const importedCookies = JSON.parse(content);
+          await CookieManagerModule.importCookies(importedCookies);
+          await loadCookies(); // Reload cookies after import
+          alert('Cookies imported successfully!');
+        } catch (error) {
+          console.error('Error importing cookies:', error);
+          alert('Failed to import cookies. Please ensure the file is a valid JSON.');
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -149,6 +142,16 @@ const CookieManager: React.FC = () => {
             >
               📋 Copy Netscape
             </button>
+            <label htmlFor="import-cookies-file" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-colors font-medium cursor-pointer">
+              📥 Import JSON
+            </label>
+            <input
+              type="file"
+              id="import-cookies-file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImportCookies}
+            />
           </div>
           
           <div className="text-xs text-gray-500 mb-3">
