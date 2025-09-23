@@ -5,13 +5,11 @@ import TabNavigation from '../components/TabNavigation';
 import EmailListManager from '../components/EmailListManager';
 import SiteClearanceManager from '../components/SiteClearanceManager';
 import CookieManager from '../components/CookieManager';
-import CookieBackupManager from '../components/CookieBackupManager';
 
 const tabs = [
   { id: 'emails', label: 'Email Lists', icon: '📧' },
   { id: 'clearance', label: 'Site Clear', icon: '🗑️' },
   { id: 'cookies', label: 'Cookie Tools', icon: '🍪' },
-  { id: 'backup', label: 'Backup/Restore', icon: '💾' },
 ];
 
 const Popup = () => {
@@ -25,8 +23,6 @@ const Popup = () => {
         return <SiteClearanceManager />;
       case 'cookies':
         return <CookieManager />;
-      case 'backup':
-        return <CookieBackupManager />;
       default:
         return <EmailListManager />;
     }

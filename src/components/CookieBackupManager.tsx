@@ -18,6 +18,8 @@ const CookieBackupManager: React.FC = () => {
   const [lastBackup, setLastBackup] = useState<BackupStats | null>(null);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const [restoreTotal, setRestoreTotal] = useState(0);
+  const [restoreStatus, setRestoreStatus] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
   useEffect(() => {
     loadLastBackupInfo();
@@ -117,6 +119,8 @@ const CookieBackupManager: React.FC = () => {
 
     setIsRestoring(true);
     setRestoreProgress(0);
+    setRestoreStatus(null);
+    setRestoreError(null);
 
     try {
       const fileContent = await restoreFile.text();
@@ -185,9 +189,10 @@ const CookieBackupManager: React.FC = () => {
       setRestoreFile(null);
 
       alert(`Restore complete!\nRestored: ${restored} cookies\nFailed: ${failed} cookies`);
+      setRestoreStatus(`Restore complete! Restored: ${restored} cookies, Failed: ${failed} cookies.`);
     } catch (error) {
         console.error('Restore error:', error);
-        alert('Restore failed: ' + (error as Error).message);
+        setRestoreError('Restore failed: ' + (error as Error).message);
     } finally {
         setIsRestoring(false);
         setRestoreProgress(0);
@@ -253,34 +258,30 @@ const CookieBackupManager: React.FC = () => {
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-cyan-400 file:text-gray-900 file:font-medium hover:file:bg-cyan-300"
             />
 
-            {restoreFile && (
-              <>
-                <div className="relative">
-                  <input
-                    type={showRestorePassword ? 'text' : 'password'}
-                    value={restorePassword}
-                    onChange={(e) => setRestorePassword(e.target.value)}
-                    placeholder="Enter restore password"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowRestorePassword(!showRestorePassword)}
-                    className="absolute right-3 top-2 text-gray-400 hover:text-cyan-400"
-                  >
-                    {showRestorePassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
-                </div>
+            <div className="relative">
+              <input
+                type={showRestorePassword ? 'text' : 'password'}
+                value={restorePassword}
+                onChange={(e) => setRestorePassword(e.target.value)}
+                placeholder="Enter restore password"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowRestorePassword(!showRestorePassword)}
+                className="absolute right-3 top-2 text-gray-400 hover:text-cyan-400"
+              >
+                {showRestorePassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
 
-                <button
-                  onClick={restoreFromBackup}
-                  disabled={isRestoring || !restorePassword.trim()}
-                  className={`w-full py-3 px-4 rounded font-medium transition-colors ${isRestoring || !restorePassword.trim() ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
-                >
-                  {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
-                </button>
-              </>
-            )}
+            <button
+              onClick={restoreFromBackup}
+              disabled={isRestoring || !restorePassword.trim()}
+              className={`w-full py-3 px-4 rounded font-medium transition-colors ${isRestoring || !restorePassword.trim() ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
+            >
+              {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
+            </button>
           </div>
 
           {isRestoring && restoreTotal > 0 && (
@@ -301,6 +302,14 @@ const CookieBackupManager: React.FC = () => {
           <p className="text-xs text-gray-500 mt-2">
             Restores encrypted .4nt backup files. Skips expired cookies automatically.
           </p>
+
+          {restoreStatus && (
+            <p className="text-sm text-cyan-400 mt-2">{restoreStatus}</p>
+          )}
+
+          {restoreError && (
+            <p className="text-sm text-red-500 mt-2">{restoreError}</p>
+          )}
         </div>
 
         {/* Last Backup Info */}
