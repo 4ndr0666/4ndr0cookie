@@ -1,33 +1,18 @@
 #!/usr/bin/env bash
 ###############################################################################
-# codex-merge-clean.sh
-# Remove Git/Codex merge-conflict markers and tidy trailing whitespace.
-# Keeps the *upper* (“ours”) half by default; use --keep-lower to keep lower.
-# Skips binary files. Safe POSIX-sh. Passes shellcheck -x.
-#
-# Usage:
-#   codex-merge-clean.sh [--keep-lower] <file1> [file2 …]
+# merge-clean.sh
+# Iteratively resolves merge conflicts based on user-defined rules.
+# In each pass, it keeps the content between '<<<<<<<' and '=======', 
+# and discards the content between '=======' and '>>>>>>>'.
 ###############################################################################
 set -euo pipefail
 IFS=$'\n\t'
 
-KEEP_UPPER=1            # default; 0 = keep lower half
 TMP_SUFFIX=".codexclean.tmp"
 
-usage() { printf 'Usage: %s [--keep-lower] <file ...>\n' "${0##*/}" >&2; exit 1; }
+usage() { printf 'Usage: %s <file ...>\n' "${0##*/}" >&2; exit 1; }
 warn()  { printf '⚠️  %s\n' "$*" >&2; }
 
-# --- argument parsing --------------------------------------------------------
-while [ $# -gt 0 ]; do
-  case $1 in
-    --keep-lower) KEEP_UPPER=0 ;;
-    -h|--help)    usage ;;
-    --) shift; break ;;
-    -*) warn "Unknown option: $1"; usage ;;
-    *)  break ;;
-  esac
-  shift
-done
 [ $# -eq 0 ] && usage
 
 # --- main loop ---------------------------------------------------------------
@@ -40,20 +25,32 @@ for FILE in "$@"; do
   fi
 
   TEMP="${FILE}${TMP_SUFFIX}"
-  awk -v keep_upper="$KEEP_UPPER" '
-    BEGIN { inside=0; take=1 }
-    /^[[:space:]]*<{7}/ { inside=1; take=keep_upper; next }
-    /^[[:space:]]*={7}/ { if (inside) { take = !keep_upper; next } }
-    /^[[:space:]]*>{7}/ { inside=0; next }
-    {
-      if (!inside)          { sub(/[[:space:]]+$/, ""); print; next }
-      if (inside && take)   { sub(/[[:space:]]+$/, ""); print }
-    }
-  ' "$FILE" >"$TEMP"
+
+  # Loop until no more conflict markers are found
+  while grep -q -E '^[[:space:]]*<{7}' "$FILE"; do
+    awk ' \
+      BEGIN { in_conflict=0; in_patch=0; } \
+      /^[[:space:]]*<{7}/ { if (!in_conflict) { in_conflict=1; in_patch=1; next } } \
+      /^[[:space:]]*={7}/ { if (in_conflict && in_patch) { in_patch=0; next } } \
+      /^[[:space:]]*>{7}/ { if (in_conflict && !in_patch) { in_conflict=0; next } } \
+      { \
+        if (!in_conflict) { print; next } \
+        if (in_conflict && in_patch) { print } \
+      } \
+    ' "$FILE" > "$TEMP"
+    mv -f "$TEMP" "$FILE"
+  done
+
+  # Final cleanup of any stray markers
+  sed -i -e '/^[[:space:]]*[<=>]{7}/d' "$FILE"
 
   # Ensure exactly one trailing newline
-  printf '\n' >>"$TEMP"
+  # Create a temporary file for the final output
+  TEMP_FINAL="${FILE}${TMP_SUFFIX}.final"
+  { cat "$FILE"; printf '\n'; } > "$TEMP_FINAL"
+  # Remove trailing whitespace and ensure single newline at EOF
+  sed -e 's/[[:space:]]*$//' -e '${/^$/d;}' "$TEMP_FINAL" > "$FILE"
+  rm -f "$TEMP" "$TEMP_FINAL"
 
-  mv -f -- "$TEMP" "$FILE"
   printf '✔ cleaned %s\n' "$FILE"
 done
