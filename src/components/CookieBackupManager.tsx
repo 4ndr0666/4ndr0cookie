@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+
 interface BackupStats {
   totalCookies: number;
   timestamp: number;
@@ -17,26 +18,9 @@ const CookieBackupManager: React.FC = () => {
   const [lastBackup, setLastBackup] = useState<BackupStats | null>(null);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const [restoreTotal, setRestoreTotal] = useState(0);
-  const [detectedEncrypted, setDetectedEncrypted] = useState<boolean | null>(null);
-  const [restorePayload, setRestorePayload] = useState<string | null>(null);
-  const [detectedCookieCount, setDetectedCookieCount] = useState<number | null>(null);
-  const [restoreStatus, setRestoreStatus] = useState<string | null>(null);
-  const [restoreError, setRestoreError] = useState<string | null>(null);
-  const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
     loadLastBackupInfo();
-
-    try {
-      workerRef.current = new Worker(new URL('../workers/encryption.worker.ts', import.meta.url));
-    } catch (e) {
-      console.error('Error creating worker:', e);
-      alert('Failed to load a critical component. Please try reloading the extension.');
-    }
-
-    return () => {
-      workerRef.current?.terminate();
-    };
   }, []);
 
   const loadLastBackupInfo = async () => {
@@ -76,56 +60,35 @@ const CookieBackupManager: React.FC = () => {
       }
 
       const cookieData = JSON.stringify(cookies, null, 2);
+      const CryptoJS = (await import('crypto-js')).default;
+      const encryptedData = CryptoJS.AES.encrypt(cookieData, backupPassword).toString();
 
-      if (workerRef.current) {
-        workerRef.current.onmessage = (event) => {
-          const { status, result, message } = event.data;
-          if (status === 'success') {
-            const encryptedData = result;
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `4ndr0tools-cookies-${timestamp}.4nt`;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `4ndr0tools-cookies-${timestamp}.4nt`;
 
-            const blob = new Blob([encryptedData], { type: 'application/octet-stream' });
-            const url = URL.createObjectURL(blob);
+      const blob = new Blob([encryptedData], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
 
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.click();
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
 
-            URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
 
-            const stats: BackupStats = {
-              totalCookies: cookies.length,
-              timestamp: Date.now(),
-              encrypted: true
-            };
+      const stats: BackupStats = {
+        totalCookies: cookies.length,
+        timestamp: Date.now(),
+        encrypted: true
+      };
 
-            saveLastBackupInfo(stats);
-            setBackupPassword('');
-            alert(`Successfully backed up ${cookies.length} cookies!`);
-          } else {
-            console.error('Backup error:', message);
-            alert('Backup failed: ' + message);
-          }
-          setIsBackingUp(false);
-        };
-
-        workerRef.current.onerror = (error) => {
-            console.error('Worker error:', error);
-            alert('Backup failed: Worker error');
-            setIsBackingUp(false);
-        };
-
-        workerRef.current.postMessage({
-          type: 'encrypt',
-          data: cookieData,
-          password: backupPassword
-        });
-      }
+      saveLastBackupInfo(stats);
+      setBackupPassword('');
+      alert(`Successfully backed up ${cookies.length} cookies!`);
     } catch (error) {
       console.error('Backup error:', error);
       alert('Backup failed: ' + (error as Error).message);
+    } finally {
       setIsBackingUp(false);
     }
   };
@@ -157,107 +120,78 @@ const CookieBackupManager: React.FC = () => {
 
     try {
       const fileContent = await restoreFile.text();
+      const CryptoJS = (await import('crypto-js')).default;
+      const decryptedBytes = CryptoJS.AES.decrypt(fileContent, restorePassword);
+      const decryptedData = decryptedBytes.toString(CryptoJS.enc.Utf8);
 
-      if (workerRef.current) {
-        workerRef.current.onmessage = async (event) => {
-          const { status, result, message } = event.data;
-          if (status === 'success') {
-            try {
-              const decryptedData = result;
-              const cookies = JSON.parse(decryptedData);
-
-              setRestoreTotal(cookies.length);
-              let restored = 0;
-              let failed = 0;
-
-              const currentTime = Date.now() / 1000;
-
-              for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i];
-
-                try {
-                  if (cookie.expirationDate && currentTime > cookie.expirationDate) {
-                    continue;
-                  }
-
-                  const cookieToSet: any = { ...cookie };
-
-                  const protocol = cookie.secure ? 'https:' : 'http:';
-                  const domain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
-                  cookieToSet.url = `${protocol}//${domain}${cookie.path}`;
-
-                  if (cookie.hostOnly) {
-                    delete cookieToSet.domain;
-                  }
-                  if (cookie.session) {
-                    delete cookieToSet.expirationDate;
-                  }
-                  delete cookieToSet.hostOnly;
-                  delete cookieToSet.session;
-
-                  await new Promise<void>((resolve, reject) => {
-                    chrome.cookies.set(cookieToSet, (result) => {
-                      if (chrome.runtime.lastError) {
-                        reject(new Error(chrome.runtime.lastError.message));
-                      } else if (result) {
-                        restored++;
-                        resolve();
-                      } else {
-                        failed++;
-                        resolve();
-                      }
-                    });
-                  });
-
-                } catch (error) {
-                  failed++;
-                  console.error('Error restoring cookie:', error);
-                }
-
-                setRestoreProgress(i + 1);
-              }
-
-              setRestorePassword('');
-              setRestoreFile(null);
-
-              alert(`Restore complete!\nRestored: ${restored} cookies\nFailed: ${failed} cookies`);
-            } catch (error) {
-                console.error('Restore error:', error);
-                alert('Restore failed: ' + (error as Error).message);
-            } finally {
-                setIsRestoring(false);
-                setRestoreProgress(0);
-                setRestoreTotal(0);
-            }
-          } else {
-            console.error('Restore error:', message);
-            alert('Restore failed: ' + message);
-            setIsRestoring(false);
-            setRestoreProgress(0);
-            setRestoreTotal(0);
-          }
-        };
-
-        workerRef.current.onerror = (error) => {
-            console.error('Worker error:', error);
-            alert('Restore failed: Worker error');
-            setIsRestoring(false);
-            setRestoreProgress(0);
-            setRestoreTotal(0);
-        };
-
-        workerRef.current.postMessage({
-          type: 'decrypt',
-          data: fileContent,
-          password: restorePassword
-        });
+      if (!decryptedData) {
+        throw new Error('Decryption failed. Invalid password or corrupted file.');
       }
+
+      const cookies = JSON.parse(decryptedData);
+
+      setRestoreTotal(cookies.length);
+      let restored = 0;
+      let failed = 0;
+
+      const currentTime = Date.now() / 1000;
+
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+
+        try {
+          if (cookie.expirationDate && currentTime > cookie.expirationDate) {
+            continue;
+          }
+
+          const cookieToSet: any = { ...cookie };
+
+          const protocol = cookie.secure ? 'https:' : 'http:';
+          const domain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
+          cookieToSet.url = `${protocol}//${domain}${cookie.path}`;
+
+          if (cookie.hostOnly) {
+            delete cookieToSet.domain;
+          }
+          if (cookie.session) {
+            delete cookieToSet.expirationDate;
+          }
+          delete cookieToSet.hostOnly;
+          delete cookieToSet.session;
+
+          await new Promise<void>((resolve, reject) => {
+            chrome.cookies.set(cookieToSet, (result) => {
+              if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+              } else if (result) {
+                restored++;
+                resolve();
+              } else {
+                failed++;
+                resolve();
+              }
+            });
+          });
+
+        } catch (error) {
+          failed++;
+          console.error('Error restoring cookie:', error);
+        }
+
+        setRestoreProgress(i + 1);
+      }
+
+      setRestorePassword('');
+      setRestoreFile(null);
+
+      alert(`Restore complete!\nRestored: ${restored} cookies\nFailed: ${failed} cookies`);
     } catch (error) {
-      console.error('Restore error:', error);
-      alert('Restore failed: ' + (error as Error).message);
-      setIsRestoring(false);
-      setRestoreProgress(0);
-      setRestoreTotal(0);
+        console.error('Restore error:', error);
+        alert('Restore failed: ' + (error as Error).message);
+    } finally {
+        setIsRestoring(false);
+        setRestoreProgress(0);
+        setRestoreTotal(0);
     }
   };
 
@@ -390,10 +324,7 @@ const CookieBackupManager: React.FC = () => {
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
           <h3 className="text-md font-medium text-cyan-400 mb-2">Security Features</h3>
           <ul className="text-sm text-gray-400 space-y-1">
-            <li>• AES-256-GCM encryption with Web Crypto API</li>
-            <li>• PBKDF2 key derivation (100,000 iterations)</li>
-            <li>• Random salt and IV for each backup</li>
-            <li>• Custom .4nt file format</li>
+            <li>• AES-256 encryption with crypto-js</li>
             <li>• No password storage or transmission</li>
           </ul>
         </div>
