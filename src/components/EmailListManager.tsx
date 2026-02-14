@@ -26,14 +26,21 @@ const EmailListManager: React.FC = () => {
   const loadEmailGroups = async () => {
     try {
       const result = await chrome.storage.local.get(['emailGroups']);
-      if (result.emailGroups) {
+      if (result.emailGroups && result.emailGroups.length > 0) {
         setEmailGroups(result.emailGroups);
-        if (result.emailGroups.length > 0 && !activeGroup) {
+        if (!activeGroup) {
           setActiveGroup(result.emailGroups[0].id);
         }
+      } else {
+        setEmailGroups(DEFAULT_EMAIL_GROUPS);
+        await chrome.storage.local.set({ emailGroups: DEFAULT_EMAIL_GROUPS });
+        setActiveGroup(DEFAULT_EMAIL_GROUPS[0].id);
       }
     } catch (error) {
       console.error('Error loading email groups:', error);
+      // Fallback to default in case of error
+      setEmailGroups(DEFAULT_EMAIL_GROUPS);
+      setActiveGroup(DEFAULT_EMAIL_GROUPS[0].id);
     }
   };
 
@@ -48,13 +55,13 @@ const EmailListManager: React.FC = () => {
 
   const createNewGroup = () => {
     if (!newGroupName.trim()) return;
-    
+
     const newGroup: EmailGroup = {
       id: Date.now().toString(),
       name: newGroupName.trim(),
       entries: []
     };
-    
+
     const updatedGroups = [...emailGroups, newGroup];
     saveEmailGroups(updatedGroups);
     setActiveGroup(newGroup.id);
@@ -72,45 +79,45 @@ const EmailListManager: React.FC = () => {
 
   const addEmailEntry = () => {
     if (!activeGroup) return;
-    
+
     const newEntry: EmailEntry = {
       id: Date.now().toString(),
       label: '',
       email: '',
       timestamp: Date.now()
     };
-    
-    const updatedGroups = emailGroups.map(group => 
-      group.id === activeGroup 
+
+    const updatedGroups = emailGroups.map(group =>
+      group.id === activeGroup
         ? { ...group, entries: [...group.entries, newEntry] }
         : group
     );
-    
+
     saveEmailGroups(updatedGroups);
   };
 
   const updateEmailEntry = (entryId: string, field: 'label' | 'email', value: string) => {
-    const updatedGroups = emailGroups.map(group => 
-      group.id === activeGroup 
+    const updatedGroups = emailGroups.map(group =>
+      group.id === activeGroup
         ? {
-            ...group, 
-            entries: group.entries.map(entry => 
+            ...group,
+            entries: group.entries.map(entry =>
               entry.id === entryId ? { ...entry, [field]: value } : entry
             )
           }
         : group
     );
-    
+
     saveEmailGroups(updatedGroups);
   };
 
   const deleteEmailEntry = (entryId: string) => {
-    const updatedGroups = emailGroups.map(group => 
-      group.id === activeGroup 
+    const updatedGroups = emailGroups.map(group =>
+      group.id === activeGroup
         ? { ...group, entries: group.entries.filter(e => e.id !== entryId) }
         : group
     );
-    
+
     saveEmailGroups(updatedGroups);
   };
 
@@ -125,19 +132,19 @@ const EmailListManager: React.FC = () => {
   const exportGroupAsText = () => {
     const group = emailGroups.find(g => g.id === activeGroup);
     if (!group) return;
-    
+
     const textContent = group.entries
       .filter(entry => entry.label && entry.email)
       .map(entry => `${entry.label}: ${entry.email}`)
       .join('\n');
-    
+
     copyToClipboard(textContent);
   };
 
   const importFromText = (text: string) => {
     const lines = text.split('\n').filter(line => line.trim());
     const newEntries: EmailEntry[] = [];
-    
+
     lines.forEach(line => {
       const colonIndex = line.indexOf(':');
       if (colonIndex > 0) {
@@ -153,10 +160,10 @@ const EmailListManager: React.FC = () => {
         }
       }
     });
-    
+
     if (newEntries.length > 0) {
-      const updatedGroups = emailGroups.map(group => 
-        group.id === activeGroup 
+      const updatedGroups = emailGroups.map(group =>
+        group.id === activeGroup
           ? { ...group, entries: [...group.entries, ...newEntries] }
           : group
       );
@@ -168,10 +175,10 @@ const EmailListManager: React.FC = () => {
   const currentEntries = currentGroup?.entries || [];
 
   return (
-    <div className="min-h-full bg-gray-900 text-gray-100">
+    <div className="hud-card">
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4">
-        <h2 className="text-lg font-semibold" style={{color: '#15FFFF'}}>Email List Manager</h2>
+      <div className="border-b border-cyan-300/20 px-4 sm:px-6 py-3 sm:py-4">
+        <h2 className="hud-title">Email List Manager</h2>
         <p className="text-sm text-gray-400">One-click dropdown with editable email entries</p>
       </div>
 
@@ -181,19 +188,17 @@ const EmailListManager: React.FC = () => {
           <select
             value={activeGroup}
             onChange={(e) => setActiveGroup(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-600 text-gray-100 rounded-lg focus:outline-none focus:border-cyan-400 text-lg font-medium"
-            style={{borderColor: activeGroup ? '#15FFFF' : undefined, color: activeGroup ? '#15FFFF' : undefined}}
+            className="hud-input appearance-none pr-10"
           >
             <option value="">📧 Select Email Group...</option>
             {emailGroups.map(group => (
               <option key={group.id} value={group.id}>{group.name}</option>
             ))}
           </select>
-          
+
           <button
             onClick={() => setShowNewGroup(true)}
-            className="absolute right-2 top-2 px-3 py-2 text-sm rounded-md transition-colors"
-            style={{backgroundColor: '#15FFFF', color: '#111827'}}
+            className="hud-btn absolute right-2 top-1/2 -translate-y-1/2"
           >
             + New
           </button>
@@ -201,19 +206,18 @@ const EmailListManager: React.FC = () => {
 
         {/* New Group Creation */}
         {showNewGroup && (
-          <div className="flex items-center space-x-2 p-4 bg-gray-800 rounded-lg border-2" style={{borderColor: '#15FFFF'}}>
+          <div className="hud-section flex items-center space-x-2">
             <input
               type="text"
               placeholder="Group name..."
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
-              className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400"
+              className="hud-input flex-1"
               onKeyPress={(e) => e.key === 'Enter' && createNewGroup()}
             />
             <button
               onClick={createNewGroup}
-              className="px-4 py-2 rounded font-medium transition-colors"
-              style={{backgroundColor: '#15FFFF', color: '#111827'}}
+              className="hud-btn"
             >
               Create
             </button>
@@ -222,7 +226,7 @@ const EmailListManager: React.FC = () => {
                 setShowNewGroup(false);
                 setNewGroupName('');
               }}
-              className="px-4 py-2 bg-gray-600 text-gray-300 rounded hover:bg-gray-500 transition-colors"
+              className="hud-btn hud-btn-danger"
             >
               Cancel
             </button>
@@ -233,21 +237,20 @@ const EmailListManager: React.FC = () => {
         {activeGroup && (
           <div className="space-y-3">
             {/* Quick Actions */}
-            <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700">
-              <h3 className="text-lg font-medium" style={{color: '#15FFFF'}}>
+            <div className="hud-section flex items-center justify-between">
+              <h3 className="hud-title">
                 {emailGroups.find(g => g.id === activeGroup)?.name}
               </h3>
               <div className="flex space-x-2">
                 <button
                   onClick={addEmailEntry}
-                  className="px-3 py-1 text-sm rounded font-medium transition-colors"
-                  style={{backgroundColor: '#15FFFF', color: '#111827'}}
+                  className="hud-btn"
                 >
                   + Add Entry
                 </button>
                 <button
                   onClick={exportGroupAsText}
-                  className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-500 transition-colors font-medium"
+                  className="hud-btn"
                 >
                   Copy All Emails
                 </button>
@@ -259,7 +262,7 @@ const EmailListManager: React.FC = () => {
                       .join(', ');
                     copyToClipboard(labels);
                   }}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-500 transition-colors font-medium"
+                  className="hud-btn"
                 >
                   Copy All Labels
                 </button>
@@ -268,43 +271,45 @@ const EmailListManager: React.FC = () => {
 
             {/* Editable Email Rows */}
             {currentEntries.map((entry) => (
-              <div key={entry.id} className="flex items-center space-x-2 p-3 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
+              <div key={entry.id} className="hud-section flex flex-wrap items-center gap-2">
                 <input
                   type="text"
                   placeholder="Label (m1, m2...)"
                   value={entry.label}
                   onChange={(e) => updateEmailEntry(entry.id, 'label', e.target.value)}
-                  className="w-32 px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400"
+                  className="hud-input flex-shrink-0"
                 />
                 <input
                   type="email"
                   placeholder="email@example.com"
                   value={entry.email}
                   onChange={(e) => updateEmailEntry(entry.id, 'email', e.target.value)}
-                  className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400"
+                  className="hud-input flex-1 min-w-0"
                 />
-                <button
-                  onClick={() => copyToClipboard(entry.email)}
-                  className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-500 transition-colors font-medium"
-                  disabled={!entry.email}
-                >
-                  📋 Copy
-                </button>
-                <button
-                  onClick={() => deleteEmailEntry(entry.id)}
-                  className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-500 transition-colors font-medium"
-                >
-                  🗑️ Delete
-                </button>
+                <div className="flex flex-shrink-0 gap-2">
+                  <button
+                    onClick={() => copyToClipboard(entry.email)}
+                    className="hud-btn"
+                    disabled={!entry.email}
+                  >
+                    📋 Copy
+                  </button>
+                  <button
+                    onClick={() => deleteEmailEntry(entry.id)}
+                    className="hud-btn hud-btn-danger"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
               </div>
             ))}
 
             {/* Import from Text */}
-            <div className="p-3 bg-gray-800 rounded-lg border border-gray-700">
+            <div className="hud-section">
               <h4 className="text-sm font-medium text-gray-300 mb-2">Import from Text</h4>
               <textarea
                 placeholder="Paste email list here (format: label: email@example.com)"
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400 text-sm"
+                className="hud-input"
                 rows={3}
                 onPaste={(e) => {
                   setTimeout(() => {
@@ -325,7 +330,7 @@ const EmailListManager: React.FC = () => {
             <div className="flex justify-end">
               <button
                 onClick={() => deleteGroup(activeGroup)}
-                className="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-500 transition-colors font-medium"
+                className="hud-btn hud-btn-danger"
               >
                 🗑️ Delete Group
               </button>

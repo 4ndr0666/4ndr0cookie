@@ -19,18 +19,13 @@ interface PasteEntry {
 // written on first load.  You can edit these values or remove them
 // altogether as you see fit.
 const DEFAULT_ENTRIES: PasteEntry[] = [
-  { id: 'pv2', label: 'pv2', value: 'moods-slyness-44@icloud.com', hidden: true },
-  { id: 'pv3', label: 'pv3 | a2e 2', value: 'nutmeg-eggcups-1m@icloud.com', hidden: true },
-  { id: 'pv4', label: 'pv4', value: 'toggle.73.wand@icloud.com', hidden: true },
-  { id: 'pv5', label: 'pv5', value: 'alerts_sonar_6p@icloud.com', hidden: true },
-  { id: 'pverse1', label: 'pverse1 & WAN', value: 'escapes-lull-8c@icloud.com', hidden: true },
-  { id: '1mwtwj', label: '1m/wt|wbj2t | a2', value: 'hinge_typical_1t@icloud.com', hidden: true },
+  { id: 'wan', label: 'WAN', value: 'escapes-lull-8c@icloud.com', hidden: true },
+  { id: '1mwtwbj2t', label: '1m | wt|wbj2t', value: 'hinge_typical_1t@icloud.com', hidden: true },
   { id: 'clipfly', label: 'clipfly', value: 'had-award8i@icloud.com', hidden: true },
-  { id: 'a2e3', label: 'a2e 3', value: 'thorns7_warmups@icloud.com', hidden: true },
-  { id: '2m', label: '2m', value: 'fiesta.room.1g@icloud.com', hidden: true },
-  { id: '3m', label: '3m', value: 'caldron.odious6b@icloud.com', hidden: true },
-  { id: '4m', label: '4m', value: 'burrow.package3d@icloud.com', hidden: true },
-  { id: '5m', label: '5m', value: 'wrapper.trance74@icloud.com', hidden: true },
+  { id: '3m', label: '3m', value: 'encoder.51-test@icloud.com', hidden: true },
+  { id: '4m', label: '4m', value: 'verve.27-gears@icloud.com', hidden: true },
+  { id: '2m', label: '2m', value: 'orotund_swan_3o@icloud.com', hidden: true },
+  { id: '00', label: '00', value: 'whoops.motor.36@icloud.com', hidden: true },
 ];
 
 /**
@@ -123,34 +118,36 @@ const PasteManager: React.FC = () => {
 
   return (
     <div className="hud-card p-3">
-      <h2 className="text-lg font-semibold mb-2">Quick Paste</h2>
+      <h2 className="hud-title">Quick Paste</h2>
       <button onClick={addEntry} className="hud-btn mb-3">+ Add Row</button>
       <div className="space-y-2">
         {entries.map((entry) => (
-          <div key={entry.id} className="flex items-center gap-2">
+          <div key={entry.id} className="flex flex-wrap items-center gap-2">
             <input
               type="text"
-              className="w-32 px-2 py-1 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400"
+              className="hud-input"
               value={entry.label}
               onChange={(e) => updateEntry(entry.id, 'label', e.target.value)}
               placeholder="Name"
             />
             <input
               type={entry.hidden ? 'password' : 'text'}
-              className="flex-1 px-2 py-1 bg-gray-700 border border-gray-600 text-gray-100 rounded focus:outline-none focus:border-cyan-400"
+              className="hud-input flex-1 min-w-0"
               value={entry.value}
               onChange={(e) => updateEntry(entry.id, 'value', e.target.value)}
               placeholder="Value"
             />
-            <button onClick={() => toggleVisibility(entry.id)} className="hud-btn px-2">
-              {entry.hidden ? 'Show' : 'Hide'}
-            </button>
-            <button onClick={() => copyToClipboard(entry.value)} className="hud-btn px-2">
-              Copy
-            </button>
-            <button onClick={() => deleteEntry(entry.id)} className="hud-btn px-2">
-              Delete
-            </button>
+            <div className="flex-shrink-0">
+              <button onClick={() => toggleVisibility(entry.id)} className="hud-btn px-2">
+                {entry.hidden ? 'Show' : 'Hide'}
+              </button>
+              <button onClick={() => copyToClipboard(entry.value)} className="hud-btn px-2">
+                Copy
+              </button>
+              <button onClick={() => deleteEntry(entry.id)} className="hud-btn px-2">
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>

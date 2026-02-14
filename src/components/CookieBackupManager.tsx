@@ -201,17 +201,17 @@ const CookieBackupManager: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-gray-900 text-gray-100">
+    <div className="hud-card">
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4">
-        <h2 className="text-lg font-semibold mb-2" style={{color: '#15FFFF'}}>Cookie Backup & Restore</h2>
+      <div className="border-b border-cyan-300/20 px-4 sm:px-6 py-3 sm:py-4">
+        <h2 className="hud-title">Cookie Backup & Restore</h2>
         <p className="text-sm text-gray-400">One-click encrypted system-wide backup/restore</p>
       </div>
 
       <div className="p-4 space-y-6">
         {/* Backup Section */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-md font-medium text-cyan-400 mb-4">System-wide Backup</h3>
+        <div className="hud-section">
+          <h3 className="hud-title mb-4">System-wide Backup</h3>
 
           <div className="space-y-3">
             <div className="relative">
@@ -220,12 +220,12 @@ const CookieBackupManager: React.FC = () => {
                 value={backupPassword}
                 onChange={(e) => setBackupPassword(e.target.value)}
                 placeholder="Enter backup password"
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 pr-10"
+                className="hud-input pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowBackupPassword(!showBackupPassword)}
-                className="absolute right-3 top-2 text-gray-400 hover:text-cyan-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400"
               >
                 {showBackupPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -234,8 +234,7 @@ const CookieBackupManager: React.FC = () => {
             <button
               onClick={backupAllCookies}
               disabled={isBackingUp || !backupPassword.trim()}
-              className={`w-full py-3 px-4 rounded font-medium transition-colors ${isBackingUp || !backupPassword.trim() ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'hover:opacity-80'}`}
-              style={!isBackingUp && backupPassword.trim() ? {backgroundColor: '#15FFFF', color: '#111827'} : {}}
+              className={`hud-btn w-full ${isBackingUp || !backupPassword.trim() ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isBackingUp ? '🔄 Creating Backup...' : '💾 One-Click Backup'}
             </button>
@@ -247,15 +246,15 @@ const CookieBackupManager: React.FC = () => {
         </div>
 
         {/* Restore Section */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-md font-medium text-cyan-400 mb-4">Restore from Backup</h3>
+        <div className="hud-section">
+          <h3 className="hud-title mb-4">Restore from Backup</h3>
 
           <div className="space-y-3">
             <input
               type="file"
               accept=".4nt"
               onChange={handleFileSelect}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-cyan-400 file:text-gray-900 file:font-medium hover:file:bg-cyan-300"
+              className="hud-input file:hud-btn file:mr-4 file:py-1 file:px-2"
             />
 
             <div className="relative">
@@ -264,12 +263,12 @@ const CookieBackupManager: React.FC = () => {
                 value={restorePassword}
                 onChange={(e) => setRestorePassword(e.target.value)}
                 placeholder="Enter restore password"
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-cyan-400 pr-10"
+                className="hud-input pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowRestorePassword(!showRestorePassword)}
-                className="absolute right-3 top-2 text-gray-400 hover:text-cyan-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400"
               >
                 {showRestorePassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -278,7 +277,7 @@ const CookieBackupManager: React.FC = () => {
             <button
               onClick={restoreFromBackup}
               disabled={isRestoring || !restorePassword.trim()}
-              className={`w-full py-3 px-4 rounded font-medium transition-colors ${isRestoring || !restorePassword.trim() ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
+              className={`hud-btn w-full ${isRestoring || !restorePassword.trim() ? 'opacity-70 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
             >
               {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
             </button>
@@ -314,8 +313,8 @@ const CookieBackupManager: React.FC = () => {
 
         {/* Last Backup Info */}
         {lastBackup && (
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-md font-medium text-cyan-400 mb-3">Last Backup</h3>
+          <div className="hud-section">
+            <h3 className="hud-title mb-3">Last Backup</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="text-gray-400">Date:</div>
               <div className="text-cyan-400 font-mono">
@@ -330,8 +329,8 @@ const CookieBackupManager: React.FC = () => {
         )}
 
         {/* Security Info */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-md font-medium text-cyan-400 mb-2">Security Features</h3>
+        <div className="hud-section">
+          <h3 className="hud-title mb-2">Security Features</h3>
           <ul className="text-sm text-gray-400 space-y-1">
             <li>• AES-256 encryption with crypto-js</li>
             <li>• No password storage or transmission</li>

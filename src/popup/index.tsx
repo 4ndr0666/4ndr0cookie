@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import './popup.css';
+import '../index.css';
 
 // Import the tab navigation and our individual tab components.  Existing
 // components come from the repository, while PasteManager is added to
@@ -43,7 +43,7 @@ const Popup: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-1">4ndr0cookie</h1>
+      <h1 className="hud-title text-center" style={{ fontFamily: "'Cinzel Decorative', serif" }}>4ndr0cookie</h1>
       <p className="text-sm mb-3">Red-team Quality of Life</p>
       <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="mt-4">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import './options.css';
+import '../index.css';
 
 interface Settings {
   emailListsEnabled: boolean;
@@ -95,7 +95,7 @@ const Options = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 py-4 sm:py-8">
+    <div>
       <div className="max-w-4xl mx-auto px-3 sm:px-4">
         <div className="hud-card">
           {/* Header */}
