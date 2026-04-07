@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 
 interface EmailEntry {
@@ -12,6 +14,8 @@ interface EmailGroup {
   name: string;
   entries: EmailEntry[];
 }
+
+const DEFAULT_EMAIL_GROUPS: EmailGroup[] = [];
 
 const EmailListManager: React.FC = () => {
   const [emailGroups, setEmailGroups] = useState<EmailGroup[]>([]);
@@ -34,13 +38,11 @@ const EmailListManager: React.FC = () => {
       } else {
         setEmailGroups(DEFAULT_EMAIL_GROUPS);
         await chrome.storage.local.set({ emailGroups: DEFAULT_EMAIL_GROUPS });
-        setActiveGroup(DEFAULT_EMAIL_GROUPS[0].id);
       }
     } catch (error) {
       console.error('Error loading email groups:', error);
       // Fallback to default in case of error
       setEmailGroups(DEFAULT_EMAIL_GROUPS);
-      setActiveGroup(DEFAULT_EMAIL_GROUPS[0].id);
     }
   };
 
