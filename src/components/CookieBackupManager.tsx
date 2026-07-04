@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-
 interface BackupStats {
   totalCookies: number;
   timestamp: number;
@@ -28,9 +27,7 @@ const CookieBackupManager: React.FC = () => {
   const loadLastBackupInfo = async () => {
     try {
       const result = await chrome.storage.local.get(['lastBackup']);
-      if (result.lastBackup) {
-        setLastBackup(result.lastBackup);
-      }
+      setLastBackup((result.lastBackup as BackupStats) || null);
     } catch (error) {
       console.error('Error loading backup info:', error);
     }

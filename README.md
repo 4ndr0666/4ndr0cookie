@@ -22,6 +22,13 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 
 ## 🎯 Features
 
+### 🗄️ Credential Vault
+- Grouped credential store per website
+- Integrated notes field (2FA, credits, trial details)
+- Account status tracking (Fresh → Active → Exhausted)
+- Quick-copy HUD: single-click email, double-click password
+- AES-256-GCM encrypted `.vault` export/import via native Web Crypto API
+
 ### 📧 Email List Manager
 - One-click dropdown to switch between groups  
 - Inline editing for labels (m1, m2...) and emails  
@@ -45,7 +52,7 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 
 ### 💾 Encrypted Cookie Backup
 - One-click system-wide backup  
-- AES-256-GCM + PBKDF2 key derivation  
+- AES-256-GCM encryption 
 - Custom `.4nt` encrypted format  
 - Restore with live progress feedback  
 - User password protection  
@@ -53,7 +60,7 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 ### 🎨 Dark Theme Interface
 - Futuristic HUD style (#111827 background, #15FFFF highlights)  
 - Unified look across all modules  
-- Responsive, modern layout  
+- Responsive, modern Tailwind v4 layout  
 
 ---
 
@@ -64,7 +71,8 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 git clone <repo-url>
 npm install
 npm run build
-````
+
+```
 
 **Load in Chrome:**
 
@@ -75,13 +83,15 @@ npm run build
 ### Development
 
 ```bash
-npm run dev
+npm start
+
 ```
 
 ### Production
 
 ```bash
 npm run build
+
 ```
 
 ---
@@ -91,16 +101,20 @@ npm run build
 ```
 4ndr0tools/
 ├── src/
-│   ├── background/            # Service worker (Alt+C)
-│   ├── components/            # React UI components
+│   ├── background/            # Service worker (Alt+C, IPC)
+│   ├── components/            # React UI components (Vault, SCM, Backup)
+│   ├── modules/               # Core isolated logic and handlers
+│   ├── lib/                   # Shared payload utilities
 │   ├── popup/                 # Popup interface
 │   ├── options/               # Options/settings
-│   └── assets/                # Icons & static files
+│   ├── assets/                # Icons & static files
+│   └── env.d.ts               # Global TypeScript declarations
 ├── dist/                      # Compiled extension
 ├── manifest.json              # Manifest V3
 ├── package.json               # Dependencies
-├── webpack.*.js               # Build configs
-└── tsconfig.json              # TypeScript config
+├── webpack.*.js               # Build configs (Webpack 5)
+└── tsconfig.json              # Strict TypeScript config
+
 ```
 
 ---
@@ -118,7 +132,7 @@ npm run build
 * Isolated feature modules
 * Shared utilities
 * React components
-* Full TypeScript
+* Strict TypeScript enforcement
 
 ### Performance
 
@@ -126,28 +140,30 @@ npm run build
 * Optimized storage usage
 * Resource cleanup
 * Minimal permissions
+* Fine-tuned Webpack 5 chunking
 
 ---
 
 ## 📖 Usage Guide
 
+* **Credential Vault** → store accounts, single-click copy, `.vault` AES-256 export
 * **Email Lists** → manage groups, copy/export/import
 * **Site Clearance** → `Alt+C` or popup button
 * **Cookie Export** → JSON/Netscape formats, clipboard only
-* **Backup/Restore** → Encrypted `.4nt` backups
+* **Backup/Restore** → Encrypted `.4nt` system backups
 * **Options** → Customize behavior and UI
 
 ---
 
 ## 🔐 Permissions
 
-* `storage` – save lists, settings
+* `storage` – save lists, vaults, and settings
 * `activeTab` – site-specific operations
 * `cookies` – manage/export/backup
-* `downloads` – save `.4nt` backups
+* `downloads` – save `.4nt` and `.vault` encrypted backups
 * `browsingData` – clear local data
 * `scripting` – manage sessionStorage
-* `<all_urls>` – required for scope
+* `<all_urls>` – required for clearance scope
 
 **Shortcut:** `Alt+C` → instant clearance
 
@@ -157,8 +173,9 @@ npm run build
 
 * Local-only storage
 * No external calls
+* Native Web Crypto API implementation
 * AES-256-GCM encryption
-* PBKDF2 with salt (100k iterations)
+* PBKDF2 with salt (310,000 iterations)
 * Passwords never stored
 * Strict CSP
 * Scoped operations
@@ -174,15 +191,24 @@ npm run build
 
 ## 📋 Changelog
 
+### v1.1.0 – Architecture & Vault Update
+
+* Added Credential Vault replacing PasteManager
+* Implemented AES-256-GCM `.vault` export/import via native WebCrypto
+* Increased PBKDF2 iterations to 310,000 for enhanced cryptography
+* Upgraded to Tailwind CSS v4
+* Enforced strict TypeScript array tuples and state typing
+* Webpack 5 performance optimization
+
 ### v1.0.0 – Initial Release
 
 * Email List Manager
 * Alt+C Site Clearance
 * Cookie Export (JSON/Netscape)
-* Encrypted Cookie Backup/Restore
+* Encrypted Cookie Backup/Restore (.4nt)
 * Dark cyan HUD UI
 * Manifest V3 + Service Worker
-* React + TypeScript + Tailwind
+* React + TypeScript + Tailwind v3
 
 ---
 
@@ -201,9 +227,9 @@ npm run build
 ## ⚡ Quick Reference
 
 * **Shortcut**: `Alt+C` site clearance
-* **File**: `.4nt` (AES-256 encrypted backup)
-* **Export**: JSON / Netscape
-* **Theme**: Dark (#111827) + Cyan (#15FFFF)
+* **File (Cookies)**: `.4nt` (AES-256 encrypted backup)
+* **File (Vault)**: `.vault` (AES-256 encrypted credentials)
+* **Theme**: Dark (#111827) + Cyan (#00E5FF)
 
 ---
 

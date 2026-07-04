@@ -45,8 +45,9 @@ const PasteManager: React.FC = () => {
     const loadEntries = async () => {
       try {
         const result = await chrome.storage.local.get(['pasteEntries']);
-        if (result.pasteEntries && Array.isArray(result.pasteEntries) && result.pasteEntries.length > 0) {
-          setEntries(result.pasteEntries as PasteEntry[]);
+        const loaded = result.pasteEntries || [];
+        if (Array.isArray(loaded) && loaded.length > 0) {
+          setEntries(loaded as PasteEntry[]);
         } else {
           setEntries(DEFAULT_ENTRIES);
           await chrome.storage.local.set({ pasteEntries: DEFAULT_ENTRIES });

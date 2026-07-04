@@ -12,7 +12,7 @@ export class ClipboardManagerModule {
   static async getHistory(): Promise<ClipboardItem[]> {
     try {
       const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      return result[this.STORAGE_KEY] || [];
+      return (result[this.STORAGE_KEY] as ClipboardItem[]) || [];
     } catch (error) {
       console.error('Error getting clipboard history:', error);
       return [];

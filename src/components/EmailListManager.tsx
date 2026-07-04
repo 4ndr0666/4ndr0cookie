@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 
 interface EmailEntry {
@@ -30,10 +28,11 @@ const EmailListManager: React.FC = () => {
   const loadEmailGroups = async () => {
     try {
       const result = await chrome.storage.local.get(['emailGroups']);
-      if (result.emailGroups && result.emailGroups.length > 0) {
-        setEmailGroups(result.emailGroups);
+      const groups = (result.emailGroups as EmailGroup[]) || [];
+      if (groups.length > 0) {
+        setEmailGroups(groups);
         if (!activeGroup) {
-          setActiveGroup(result.emailGroups[0].id);
+          setActiveGroup(groups[0].id);
         }
       } else {
         setEmailGroups(DEFAULT_EMAIL_GROUPS);

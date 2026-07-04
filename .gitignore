@@ -91,3 +91,5 @@ Thumbs.db
 *.webp
 node_modules
 screenshots
+dist
+package-lock.json

@@ -18,9 +18,7 @@ const ClipboardManager: React.FC = () => {
   const loadClipboardHistory = async () => {
     try {
       const result = await chrome.storage.local.get(['clipboardHistory']);
-      if (result.clipboardHistory) {
-        setClipboardHistory(result.clipboardHistory);
-      }
+      setClipboardHistory((result.clipboardHistory as ClipboardItem[]) || []);
     } catch (error) {
       console.error('Error loading clipboard history:', error);
     }
@@ -29,14 +27,14 @@ const ClipboardManager: React.FC = () => {
   const saveToClipboard = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      
+
       // Update the item's timestamp to move it to the top
-      const updatedHistory = clipboardHistory.map(item => 
-        item.content === content 
+      const updatedHistory = clipboardHistory.map(item =>
+        item.content === content
           ? { ...item, timestamp: Date.now() }
           : item
       ).sort((a, b) => b.timestamp - a.timestamp);
-      
+
       setClipboardHistory(updatedHistory);
       await chrome.storage.local.set({ clipboardHistory: updatedHistory });
     } catch (error) {
@@ -110,7 +108,7 @@ const ClipboardManager: React.FC = () => {
                     </span>
                   </div>
                   <div className="text-sm text-gray-900 break-all">
-                    {item.content.length > 100 
+                    {item.content.length > 100
                       ? `${item.content.substring(0, 100)}...`
                       : item.content
                     }
