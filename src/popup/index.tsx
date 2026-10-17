@@ -1,4 +1,11 @@
-import React, { useState } from 'react';
+/**
+ * popup/index.tsx
+ *
+ * Four-module popup: Site Clear · Cookie Tools · Vault · Backup/Restore.
+ * Feature flags set in the Options page gate each module (default: enabled).
+ */
+
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import '../index.css';
 
@@ -6,22 +13,71 @@ import TabNavigation from '../components/TabNavigation';
 import SiteClearanceManager from '../components/SiteClearanceManager';
 import CookieManager from '../components/CookieManager';
 import CredentialVault from '../components/CredentialVault';
+import CookieBackupManager from '../components/CookieBackupManager';
+
+interface FeatureFlags {
+  siteClearanceEnabled: boolean;
+  vaultEnabled: boolean;
+  cookieBackupEnabled: boolean;
+}
+
+const DEFAULT_FLAGS: FeatureFlags = {
+  siteClearanceEnabled: true,
+  vaultEnabled: true,
+  cookieBackupEnabled: true,
+};
 
 const tabs = [
-  { id: 'clearance', label: 'Site Clear', icon: '' },
-  { id: 'cookies',   label: 'Cookie Tools', icon: '' },
-  { id: 'vault',     label: 'Vault', icon: '' },
+  { id: 'clearance', label: 'Site Clear', icon: '🗑️' },
+  { id: 'cookies',   label: 'Cookie Tools', icon: '🍪' },
+  { id: 'vault',     label: 'Vault', icon: '🔐' },
+  { id: 'backup',    label: 'Backup', icon: '💾' },
 ];
+
+const DisabledModule: React.FC<{ name: string }> = ({ name }) => (
+  <div className="hud-card p-6 text-center">
+    <p className="hud-title" style={{ fontSize: '0.75rem' }}>{name} disabled</p>
+    <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+      Re-enable this module in the extension Options page.
+    </p>
+  </div>
+);
 
 const Popup: React.FC = () => {
   const [activeTab, setActiveTab] = useState('clearance');
+  const [flags, setFlags] = useState<FeatureFlags>(DEFAULT_FLAGS);
+
+  useEffect(() => {
+    chrome.storage.local
+      .get(Object.keys(DEFAULT_FLAGS))
+      .then((stored) => {
+        setFlags({
+          siteClearanceEnabled: stored.siteClearanceEnabled !== false,
+          vaultEnabled: stored.vaultEnabled !== false,
+          cookieBackupEnabled: stored.cookieBackupEnabled !== false,
+        });
+      })
+      .catch(console.error);
+  }, []);
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'clearance': return <SiteClearanceManager />;
-      case 'cookies':   return <CookieManager />;
-      case 'vault':     return <CredentialVault />;
-      default:          return null;
+      case 'clearance':
+        return flags.siteClearanceEnabled
+          ? <SiteClearanceManager />
+          : <DisabledModule name="Site Clearance" />;
+      case 'cookies':
+        return <CookieManager />;
+      case 'vault':
+        return flags.vaultEnabled
+          ? <CredentialVault />
+          : <DisabledModule name="Credential Vault" />;
+      case 'backup':
+        return flags.cookieBackupEnabled
+          ? <CookieBackupManager />
+          : <DisabledModule name="Cookie Backup/Restore" />;
+      default:
+        return null;
     }
   };
 

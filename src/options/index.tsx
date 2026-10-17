@@ -1,3 +1,20 @@
+/**
+ * options/index.tsx
+ *
+ * Settings page. Every toggle here is live-wired:
+ *
+ *   siteClearanceEnabled   → gates Alt+C handler (SW) + Site Clear buttons (popup)
+ *   autoReload             → post-operation reload (SW + popup) — runtime truth
+ *                            lives in chrome.storage.local so the popup toggle
+ *                            and the Options toggle always agree
+ *   showBadgeNotifications → gates ✓/✗ badge feedback (SW + popup)
+ *   cookieBackupEnabled    → gates the Backup/Restore popup module
+ *   vaultEnabled           → gates the Credential Vault popup module
+ *                            (successor of v1.0.1's emailListsEnabled)
+ *   syncSettings           → when on, settings replicate via chrome.storage.sync;
+ *                            runtime-consumed keys are always mirrored to local
+ */
+
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import '../index.css';
@@ -5,6 +22,7 @@ import '../index.css';
 interface Settings {
   siteClearanceEnabled: boolean;
   cookieBackupEnabled: boolean;
+  vaultEnabled: boolean;
   autoReload: boolean;
   showBadgeNotifications: boolean;
   syncSettings: boolean;
@@ -13,10 +31,20 @@ interface Settings {
 const defaultSettings: Settings = {
   siteClearanceEnabled: true,
   cookieBackupEnabled: true,
+  vaultEnabled: true,
   autoReload: true,
   showBadgeNotifications: true,
   syncSettings: true,
 };
+
+/** Keys consumed at runtime by SW / popup — always mirrored to storage.local. */
+const RUNTIME_KEYS: (keyof Settings)[] = [
+  'siteClearanceEnabled',
+  'cookieBackupEnabled',
+  'vaultEnabled',
+  'autoReload',
+  'showBadgeNotifications',
+];
 
 const Options = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -27,8 +55,13 @@ const Options = () => {
 
   const loadSettings = async () => {
     try {
-      const result = await chrome.storage.sync.get(Object.keys(defaultSettings));
-      setSettings({ ...defaultSettings, ...result });
+      const [local, sync] = await Promise.all([
+        chrome.storage.local.get(Object.keys(defaultSettings)),
+        chrome.storage.sync.get(Object.keys(defaultSettings)),
+      ]);
+      const useSync = (local.syncSettings ?? sync.syncSettings ?? true) !== false;
+      const source = useSync ? sync : local;
+      setSettings(normalizeSettings({ ...source, ...pickDefined(local, RUNTIME_KEYS) }));
     } catch (error) {
       console.error('Error loading settings:', error);
     }
@@ -38,7 +71,11 @@ const Options = () => {
     setIsSaving(true);
     setSaveStatus('idle');
     try {
-      await chrome.storage.sync.set(settings);
+      // Primary store: sync (when enabled) or local
+      await (settings.syncSettings ? chrome.storage.sync : chrome.storage.local).set(settings);
+      // Runtime mirror: the SW and popup read these keys from storage.local
+      const mirror = pickDefined(settings, RUNTIME_KEYS);
+      await chrome.storage.local.set(mirror);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
@@ -68,6 +105,7 @@ const Options = () => {
 
   const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -124,8 +162,8 @@ const Options = () => {
             </section>
 
             <section>
-              <h2 className="hud-title">Cookie Backup &amp; Restore</h2>
-              <div className="hud-section">
+              <h2 className="hud-title">Cookie Tools</h2>
+              <div className="hud-section space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -142,6 +180,24 @@ const Options = () => {
                     style={{ accentColor: 'var(--accent-cyan)' }}
                     className="h-4 w-4"
                     aria-label="Enable cookie backup"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      Enable Credential Vault
+                    </label>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Throwaway identity rotation tracker (email + password pairs)
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.vaultEnabled}
+                    onChange={(e) => updateSetting('vaultEnabled', e.target.checked)}
+                    style={{ accentColor: 'var(--accent-cyan)' }}
+                    className="h-4 w-4"
+                    aria-label="Enable credential vault"
                   />
                 </div>
               </div>
@@ -212,6 +268,26 @@ const Options = () => {
     </div>
   );
 };
+
+/* ── helpers ── */
+
+/** Copy only defined keys (runtime truth overrides stored defaults). */
+function pickDefined<T extends object>(source: T, keys: (keyof T)[]): Partial<T> {
+  const out: Partial<T> = {};
+  for (const key of keys) {
+    if (source[key] !== undefined) out[key] = source[key];
+  }
+  return out;
+}
+
+/** Coerce a raw storage object into a fully-typed Settings record. */
+function normalizeSettings(raw: Record<string, unknown>): Settings {
+  const out = { ...defaultSettings };
+  for (const key of Object.keys(defaultSettings) as (keyof Settings)[]) {
+    if (typeof raw[key] === 'boolean') out[key] = raw[key] as boolean;
+  }
+  return out;
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(<React.StrictMode><Options /></React.StrictMode>);

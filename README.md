@@ -23,18 +23,18 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 ## 🎯 Features
 
 ### 🗄️ Credential Vault
-- Grouped credential store per website
-- Integrated notes field (2FA, credits, trial details)
+- Grouped throwaway-identity rotation tracker (consolidates the legacy Email List Manager and PasteManager)
+- Zero hardcoded seed credentials in source code — clean empty initialization by default
+- At-rest AES-256-GCM vault sealing (`VaultStorageEnvelope` in `chrome.storage.local`) with PBKDF2-HMAC-SHA256 (310,000 iterations) and ephemeral unlocked session caching in `chrome.storage.session`
+- Email + password pairs with short labels (m1, m2…) and instant site/account search filter
+- Rotation tracking: every copy auto-stamps last-used; first Fresh account is marked `▸ NEXT IN ROTATION`
 - Account status tracking (Fresh → Active → Exhausted)
+- Integrated notes field (2FA, credits, trial details)
 - Quick-copy HUD: single-click email, double-click password
-- AES-256-GCM encrypted `.vault` export/import via native Web Crypto API
-
-### 📧 Email List Manager
-- One-click dropdown to switch between groups  
-- Inline editing for labels (m1, m2...) and emails  
-- Copy individual entries or bulk (emails/labels)  
-- Import/export lists via text  
-- Dynamic group management  
+- Bulk copy: all emails, or `label: email` lines
+- Text import: `label: email: password`, `email: password`, `label: email`, bare emails, or `label: secret` pairs
+- Automatic migration and immediate key-scrubbing of legacy `emailGroups`, `emailList`, `pasteEntries`, and `pasteManagerItems`
+- AES-256-GCM encrypted `.vault` (`4ntv` binary and JSON envelope) export/import via native Web Crypto API
 
 ### 🧹 Site Clearance Manager
 - `Alt+C` → instant clearance of site data  
@@ -44,18 +44,21 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 - One-click manual clearance  
 - Domain-specific scope  
 
-### 🍪 Cookie Export Tools
-- JSON / Netscape formats  
-- One-click copy to clipboard  
-- No downloads (stealth mode)  
-- Domain-specific export  
+### 🍪 Cookie Tools
+- JSON / Netscape formats — clipboard (stealth mode) or file download
+- Auto-detecting import: JSON arrays, `{cookies:[…]}` wrappers, or Netscape files
+- Inline cookie editing (name/value) with lossless identity and SameSite/storeId handling
+- Per-cookie delete and bulk site delete
+- Domain-specific, search-filtered view  
 
 ### 💾 Encrypted Cookie Backup
 - One-click system-wide backup  
-- AES-256-GCM encryption 
-- Custom `.4nt` encrypted format  
-- Restore with live progress feedback  
-- User password protection  
+- AES-256-GCM via native Web Crypto API (zero dependencies)
+- PBKDF2 key derivation — SHA-256, 310,000 iterations  
+- Export sanitization: ephemeral tokens (`__cf_bm`, `_ga*`, `__Secure-*PSIDTS`, …) never enter the baseline  
+- JSON envelope carrying IV + salt + ciphertext  
+- Restores current and v1.0.x `.4nt` formats  
+- Idempotent upsert restore (`Promise.allSettled`, live sessions never swept, expired skipped) with progress feedback  
 
 ### 🎨 Dark Theme Interface
 - Futuristic HUD style (#111827 background, #15FFFF highlights)  
@@ -68,10 +71,9 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 
 ### Quick Setup
 ```bash
-git clone <repo-url>
+git clone https://github.com/4ndr0666/4ndr0cookie.git
 npm install
 npm run build
-
 ```
 
 **Load in Chrome:**
@@ -84,14 +86,14 @@ npm run build
 
 ```bash
 npm start
-
 ```
 
-### Production
+### Verification & Production
 
 ```bash
+npm run check
+npm run docs
 npm run build
-
 ```
 
 ---
@@ -99,22 +101,22 @@ npm run build
 ## 📁 Project Structure
 
 ```
-4ndr0tools/
+4ndr0cookie/
 ├── src/
-│   ├── background/            # Service worker (Alt+C, IPC)
-│   ├── components/            # React UI components (Vault, SCM, Backup)
-│   ├── modules/               # Core isolated logic and handlers
+│   ├── background/            # Service worker (Alt+C, async IPC dispatcher)
+│   ├── components/            # React UI components (Vault, SCM, Cookie Tools, Backup)
+│   ├── modules/               # Core isolated logic (cookies, backup crypto, vault crypto)
 │   ├── lib/                   # Shared payload utilities
 │   ├── popup/                 # Popup interface
 │   ├── options/               # Options/settings
 │   ├── assets/                # Icons & static files
 │   └── env.d.ts               # Global TypeScript declarations
+├── tools/                     # Automated verification & documentation gates
 ├── dist/                      # Compiled extension
 ├── manifest.json              # Manifest V3
-├── package.json               # Dependencies
+├── package.json               # Dependencies & verification scripts
 ├── webpack.*.js               # Build configs (Webpack 5)
 └── tsconfig.json              # Strict TypeScript config
-
 ```
 
 ---
@@ -129,8 +131,8 @@ npm run build
 
 ### Modular Design
 
-* Isolated feature modules
-* Shared utilities
+* Isolated feature modules (`cookieManager`, `cookie-backup`, `credentialVault`)
+* Shared utilities (`clearancePayload`)
 * React components
 * Strict TypeScript enforcement
 
@@ -146,18 +148,17 @@ npm run build
 
 ## 📖 Usage Guide
 
-* **Credential Vault** → store accounts, single-click copy, `.vault` AES-256 export
-* **Email Lists** → manage groups, copy/export/import
+* **Credential Vault** → track throwaway rotations, seal vault at rest with AES-256-GCM, single-click copy, `.vault` export/import
 * **Site Clearance** → `Alt+C` or popup button
-* **Cookie Export** → JSON/Netscape formats, clipboard only
+* **Cookie Tools** → JSON/Netscape export (clipboard/file), import, inline edit
 * **Backup/Restore** → Encrypted `.4nt` system backups
-* **Options** → Customize behavior and UI
+* **Options** → Live-wired feature flags, sync settings, import/export
 
 ---
 
 ## 🔐 Permissions
 
-* `storage` – save lists, vaults, and settings
+* `storage` – save vaults, settings, and backup stats
 * `activeTab` – site-specific operations
 * `cookies` – manage/export/backup
 * `downloads` – save `.4nt` and `.vault` encrypted backups
@@ -171,14 +172,14 @@ npm run build
 
 ## 🔒 Security & Privacy
 
-* Local-only storage
+* Local-only storage with zero hardcoded seed credentials
 * No external calls
 * Native Web Crypto API implementation
-* AES-256-GCM encryption
-* PBKDF2 with salt (310,000 iterations)
-* Passwords never stored
-* Strict CSP
-* Scoped operations
+* AES-256-GCM encryption for `.4nt` backups, `.vault` exports, and sealed at-rest vault storage
+* PBKDF2 with salt (310,000 iterations, SHA-256)
+* Ephemeral unlocked session cache via `chrome.storage.session`
+* Automatic scrubbing of legacy plaintext storage keys on migration
+* Strict CSP and scoped operations
 
 ---
 
@@ -190,6 +191,21 @@ npm run build
 ---
 
 ## 📋 Changelog
+
+### v1.1.1 – Pipeline Overhaul, Sensitive Storage Redesign & Gap Mitigation
+
+* **Sensitive Storage Redesign**: extracted `src/modules/credentialVault/index.ts`, purged all hardcoded personal seed credentials from source code, added at-rest AES-256-GCM vault sealing (`VaultStorageEnvelope`) with `chrome.storage.session` ephemeral unlock caching, and automated scrubbing of legacy `emailGroups`/`emailList`/`pasteEntries`/`pasteManagerItems` storage keys
+* **Cookie Tools fixed**: single-site JSON/Netscape export (clipboard + download), auto-detecting import (JSON / Netscape), inline cookie editing with SameSite/storeId preservation, bulk site delete
+* **Backup/Restore restored** as a popup module (was orphaned) and rebuilt on native Web Crypto — AES-256-GCM + PBKDF2 (310k iterations), replacing interim crypto-js usage, with accurate v2 envelope auto-detection in `parseCookieBackup`
+* **Export sanitization matrix**: Cloudflare/bot tokens, sliding-window auth tickets, and telemetry cookies are excluded from long-term recovery baselines
+* **Restoration hardening**: `Promise.allSettled` batching, cookie-derived URL synthesis, storeId validation, host-only/session/SameSite=None data-loss guards, idempotent upsert
+* **Netscape fidelity**: `#HttpOnly_` prefix on export, normalized domain/subdomain flags, full parser on import (lossless round-trip)
+* **Credential Vault upgraded** into a rotation tracker: last-used stamping on every copy, `▸ NEXT IN ROTATION` marker, account labels, site/account search filter, bulk copy, lossless text import, legacy email-list/paste/flat-credential migration, quick-copy popover status badge fix
+* **Service Worker IPC bus wired**: complete async `dispatchRuntimeMessage` handler (`ping`, `get-settings`, `clear-site-data`, `refresh-site-data`, `vault-session-*`) with HTTP/HTTPS scheme validation
+* **Options wired live**: every toggle now gates real behavior; autoReload sync/local mismatch fixed; vault feature flag added
+* **Icon system**: `#15FFFF` outlined unicode icons (`.hud-icon`) on tabs and controls
+* **Dead code purge**: PasteManager, EmailListManager, ClipboardManager, debug console dump, crypto-js/express dependencies removed — zero stubs, zero orphaned references
+* Verified: strict TypeScript/Babel compilation, 42-point automated verification battery (`npm run check`), idempotent documentation gate (`npm run docs`)
 
 ### v1.1.0 – Architecture & Vault Update
 
@@ -216,8 +232,6 @@ npm run build
 
 * [ ] Configurable shortcuts
 * [ ] Context menu integration
-* [ ] Cookie editing tools
-* [ ] Settings import/export
 * [ ] External red-team tool integrations
 * [ ] ChaCha20-Poly1305 support
 * [ ] Hardware key integration
@@ -227,9 +241,9 @@ npm run build
 ## ⚡ Quick Reference
 
 * **Shortcut**: `Alt+C` site clearance
-* **File (Cookies)**: `.4nt` (AES-256 encrypted backup)
-* **File (Vault)**: `.vault` (AES-256 encrypted credentials)
-* **Theme**: Dark (#111827) + Cyan (#00E5FF)
+* **File (Cookies)**: `.4nt` (AES-256-GCM encrypted backup)
+* **File (Vault)**: `.vault` (AES-256-GCM encrypted credentials)
+* **Theme**: Dark (#111827) + Cyan (#00E5FF) + icon accent (#15FFFF)
 
 ---
 

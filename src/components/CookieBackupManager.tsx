@@ -1,10 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+/**
+ * CookieBackupManager.tsx
+ *
+ * System-wide encrypted cookie backup / restore.
+ *
+ * Backup : chrome.cookies.getAll → Alpha sanitization matrix →
+ *          Beta Web Crypto envelope (PBKDF2 310k / AES-256-GCM) → .4nt file
+ * Restore: password prompt → in-memory decrypt → Gamma hardened upsert
+ *          (Promise.allSettled, no global removal sweep, expired skipped)
+ */
+
+import React, { useState, useEffect } from 'react';
+
+import {
+  PasswordRequiredError,
+  buildCookieSetDetails,
+  decryptBackup,
+  encryptBackup,
+  getAvailableCookieStoreIds,
+  sanitizeCookies,
+} from '../modules/cookie-backup';
 
 interface BackupStats {
   totalCookies: number;
+  retainedCookies: number;
+  droppedCookies: number;
   timestamp: number;
   encrypted: boolean;
 }
+
+const RESTORE_CHUNK_SIZE = 20;
 
 const CookieBackupManager: React.FC = () => {
   const [isBackingUp, setIsBackingUp] = useState(false);
@@ -19,6 +43,8 @@ const CookieBackupManager: React.FC = () => {
   const [restoreTotal, setRestoreTotal] = useState(0);
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [backupStatus, setBackupStatus] = useState<string | null>(null);
+  const [backupError, setBackupError] = useState<string | null>(null);
 
   useEffect(() => {
     loadLastBackupInfo();
@@ -42,25 +68,32 @@ const CookieBackupManager: React.FC = () => {
     }
   };
 
+  /* ── Backup: sanitize (Alpha) → encrypt (Beta) → download ── */
   const backupAllCookies = async () => {
     if (!backupPassword.trim()) {
-      alert('Please enter a backup password');
+      setBackupError('Enter a backup password first.');
+      setBackupStatus(null);
       return;
     }
 
     setIsBackingUp(true);
+    setBackupStatus(null);
+    setBackupError(null);
 
     try {
-      const cookies = await chrome.cookies.getAll({});
-      if (cookies.length === 0) {
-        alert('No cookies found to backup');
-        setIsBackingUp(false);
+      const allCookies = await chrome.cookies.getAll({});
+      if (allCookies.length === 0) {
+        setBackupError('No cookies found to backup.');
         return;
       }
 
-      const cookieData = JSON.stringify(cookies, null, 2);
-      const CryptoJS = (await import('crypto-js')).default;
-      const encryptedData = CryptoJS.AES.encrypt(cookieData, backupPassword).toString();
+      const { cookies, report } = sanitizeCookies(allCookies);
+      if (cookies.length === 0) {
+        setBackupError('All cookies matched the sanitization matrix — nothing to back up.');
+        return;
+      }
+
+      const encryptedData = await encryptBackup(cookies, backupPassword);
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `4ndr0tools-cookies-${timestamp}.4nt`;
@@ -76,17 +109,24 @@ const CookieBackupManager: React.FC = () => {
       URL.revokeObjectURL(url);
 
       const stats: BackupStats = {
-        totalCookies: cookies.length,
+        totalCookies: allCookies.length,
+        retainedCookies: report.retained,
+        droppedCookies: report.dropped,
         timestamp: Date.now(),
-        encrypted: true
+        encrypted: true,
       };
 
-      saveLastBackupInfo(stats);
+      await saveLastBackupInfo(stats);
       setBackupPassword('');
-      alert(`Successfully backed up ${cookies.length} cookies!`);
+      setBackupStatus(
+        report.dropped > 0
+          ? `Backup created — ${report.retained} cookies retained, ` +
+            `${report.dropped} ephemeral dropped (re-issued on demand).`
+          : `Backup created — ${report.retained} cookies retained.`,
+      );
     } catch (error) {
       console.error('Backup error:', error);
-      alert('Backup failed: ' + (error as Error).message);
+      setBackupError('Backup failed: ' + (error as Error).message);
     } finally {
       setIsBackingUp(false);
     }
@@ -94,23 +134,28 @@ const CookieBackupManager: React.FC = () => {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    // Reset so re-selecting the same file re-fires onChange
+    event.target.value = '';
     if (file) {
       if (!file.name.endsWith('.4nt')) {
-        alert('Please select a valid .4nt backup file');
+        setRestoreError('Please select a valid .4nt backup file.');
+        setRestoreFile(null);
         return;
       }
       setRestoreFile(file);
+      setRestoreError(null);
+      setRestoreStatus(null);
     }
   };
 
+  /* ── Restore: decrypt → chunked allSettled upsert (Gamma) ── */
   const restoreFromBackup = async () => {
     if (!restoreFile) {
-      alert('Please select a backup file');
+      setRestoreError('Please select a backup file.');
       return;
     }
-
     if (!restorePassword.trim()) {
-      alert('Please enter the restore password');
+      setRestoreError('Please enter the restore password.');
       return;
     }
 
@@ -121,79 +166,48 @@ const CookieBackupManager: React.FC = () => {
 
     try {
       const fileContent = await restoreFile.text();
-      const CryptoJS = (await import('crypto-js')).default;
-      const decryptedBytes = CryptoJS.AES.decrypt(fileContent, restorePassword);
-      const decryptedData = decryptedBytes.toString(CryptoJS.enc.Utf8);
+      const cookies = await decryptBackup(fileContent, restorePassword);
 
-      if (!decryptedData) {
-        throw new Error('Decryption failed. Invalid password or corrupted file.');
-      }
+      const currentTime = Date.now() / 1000;
+      const expired = cookies.filter((c) => c.expirationDate && currentTime > c.expirationDate);
+      const restorable = cookies.filter((c) => !(c.expirationDate && currentTime > c.expirationDate));
 
-      const cookies = JSON.parse(decryptedData);
+      setRestoreTotal(restorable.length);
 
-      setRestoreTotal(cookies.length);
+      const availableStoreIds = await getAvailableCookieStoreIds();
       let restored = 0;
       let failed = 0;
 
-      const currentTime = Date.now() / 1000;
-
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i];
-
-        try {
-          if (cookie.expirationDate && currentTime > cookie.expirationDate) {
-            continue;
-          }
-
-          const cookieToSet: any = { ...cookie };
-
-          const protocol = cookie.secure ? 'https:' : 'http:';
-          const domain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
-          cookieToSet.url = `${protocol}//${domain}${cookie.path}`;
-
-          if (cookie.hostOnly) {
-            delete cookieToSet.domain;
-          }
-          if (cookie.session) {
-            delete cookieToSet.expirationDate;
-          }
-          delete cookieToSet.hostOnly;
-          delete cookieToSet.session;
-
-          await new Promise<void>((resolve, reject) => {
-            chrome.cookies.set(cookieToSet, (result) => {
-              if (chrome.runtime.lastError) {
-                reject(new Error(chrome.runtime.lastError.message));
-              } else if (result) {
-                restored++;
-                resolve();
-              } else {
-                failed++;
-                resolve();
-              }
-            });
-          });
-
-        } catch (error) {
-          failed++;
-          console.error('Error restoring cookie:', error);
+      for (let i = 0; i < restorable.length; i += RESTORE_CHUNK_SIZE) {
+        const chunk = restorable.slice(i, i + RESTORE_CHUNK_SIZE);
+        const results = await Promise.allSettled(
+          chunk.map((cookie) => chrome.cookies.set(buildCookieSetDetails(cookie, availableStoreIds))),
+        );
+        for (const result of results) {
+          if (result.status === 'fulfilled' && result.value) restored++;
+          else failed++;
         }
-
-        setRestoreProgress(i + 1);
+        setRestoreProgress(Math.min(i + RESTORE_CHUNK_SIZE, restorable.length));
       }
 
       setRestorePassword('');
       setRestoreFile(null);
 
-      alert(`Restore complete!\nRestored: ${restored} cookies\nFailed: ${failed} cookies`);
-      setRestoreStatus(`Restore complete! Restored: ${restored} cookies, Failed: ${failed} cookies.`);
+      const skippedNote = expired.length > 0 ? `, ${expired.length} expired skipped` : '';
+      setRestoreStatus(
+        `Restore complete — ${restored} restored, ${failed} failed${skippedNote}.`,
+      );
     } catch (error) {
-        console.error('Restore error:', error);
-        setRestoreError('Restore failed: ' + (error as Error).message);
+      console.error('Restore error:', error);
+      setRestoreError(
+        error instanceof PasswordRequiredError
+          ? 'Password is required for encrypted backups.'
+          : 'Restore failed: ' + (error as Error).message,
+      );
     } finally {
-        setIsRestoring(false);
-        setRestoreProgress(0);
-        setRestoreTotal(0);
+      setIsRestoring(false);
+      setRestoreProgress(0);
+      setRestoreTotal(0);
     }
   };
 
@@ -201,7 +215,7 @@ const CookieBackupManager: React.FC = () => {
     <div className="hud-card">
       {/* Header */}
       <div className="border-b border-cyan-300/20 px-4 sm:px-6 py-3 sm:py-4">
-        <h2 className="hud-title">Cookie Backup & Restore</h2>
+        <h2 className="hud-title">Cookie Backup &amp; Restore</h2>
         <p className="text-sm text-gray-400">One-click encrypted system-wide backup/restore</p>
       </div>
 
@@ -218,13 +232,15 @@ const CookieBackupManager: React.FC = () => {
                 onChange={(e) => setBackupPassword(e.target.value)}
                 placeholder="Enter backup password"
                 className="hud-input pr-10"
+                aria-label="Backup password"
               />
               <button
                 type="button"
                 onClick={() => setShowBackupPassword(!showBackupPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400"
+                aria-label={showBackupPassword ? 'Hide password' : 'Show password'}
               >
-                {showBackupPassword ? '👁️' : '👁️‍🗨️'}
+                <span className="hud-icon">{showBackupPassword ? '👁️' : '👁️‍🗨️'}</span>
               </button>
             </div>
 
@@ -238,8 +254,17 @@ const CookieBackupManager: React.FC = () => {
           </div>
 
           <p className="text-xs text-gray-500 mt-2">
-            Creates an encrypted .4nt file with all cookies from all domains
+            Creates an encrypted .4nt file with all cookies from all domains.
+            Ephemeral tokens (Cloudflare, analytics, sliding-window tickets) are
+            sanitized out for a clean recovery baseline.
           </p>
+
+          {backupStatus && (
+            <p className="text-sm text-cyan-400 mt-2">{backupStatus}</p>
+          )}
+          {backupError && (
+            <p className="text-sm text-red-500 mt-2">{backupError}</p>
+          )}
         </div>
 
         {/* Restore Section */}
@@ -252,6 +277,7 @@ const CookieBackupManager: React.FC = () => {
               accept=".4nt"
               onChange={handleFileSelect}
               className="hud-input file:hud-btn file:mr-4 file:py-1 file:px-2"
+              aria-label="Backup file"
             />
 
             <div className="relative">
@@ -261,20 +287,22 @@ const CookieBackupManager: React.FC = () => {
                 onChange={(e) => setRestorePassword(e.target.value)}
                 placeholder="Enter restore password"
                 className="hud-input pr-10"
+                aria-label="Restore password"
               />
               <button
                 type="button"
                 onClick={() => setShowRestorePassword(!showRestorePassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400"
+                aria-label={showRestorePassword ? 'Hide password' : 'Show password'}
               >
-                {showRestorePassword ? '👁️' : '👁️‍🗨️'}
+                <span className="hud-icon">{showRestorePassword ? '👁️' : '👁️‍🗨️'}</span>
               </button>
             </div>
 
             <button
               onClick={restoreFromBackup}
-              disabled={isRestoring || !restorePassword.trim()}
-              className={`hud-btn w-full ${isRestoring || !restorePassword.trim() ? 'opacity-70 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
+              disabled={isRestoring || !restorePassword.trim() || !restoreFile}
+              className={`hud-btn w-full ${isRestoring || !restorePassword.trim() || !restoreFile ? 'opacity-70 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-500'}`}
             >
               {isRestoring ? '🔄 Restoring...' : '📥 One-Click Restore'}
             </button>
@@ -296,7 +324,9 @@ const CookieBackupManager: React.FC = () => {
           )}
 
           <p className="text-xs text-gray-500 mt-2">
-            Restores encrypted .4nt backup files. Skips expired cookies automatically.
+            Restores encrypted .4nt backup files (current and v1.0.x formats).
+            Skips expired cookies automatically. Live sessions are never swept —
+            restore is a pure upsert.
           </p>
 
           {restoreStatus && (
@@ -318,7 +348,11 @@ const CookieBackupManager: React.FC = () => {
                 {new Date(lastBackup.timestamp).toLocaleString()}
               </div>
               <div className="text-gray-400">Cookies:</div>
-              <div className="text-cyan-400 font-mono">{lastBackup.totalCookies.toLocaleString()}</div>
+              <div className="text-cyan-400 font-mono">
+                {typeof lastBackup.retainedCookies === 'number'
+                  ? `${lastBackup.retainedCookies.toLocaleString()} / ${lastBackup.totalCookies.toLocaleString()}`
+                  : lastBackup.totalCookies.toLocaleString()}
+              </div>
               <div className="text-gray-400">Encrypted:</div>
               <div className="text-cyan-400">{lastBackup.encrypted ? '✓ Yes' : '✗ No'}</div>
             </div>
@@ -329,7 +363,8 @@ const CookieBackupManager: React.FC = () => {
         <div className="hud-section">
           <h3 className="hud-title mb-2">Security Features</h3>
           <ul className="text-sm text-gray-400 space-y-1">
-            <li>• AES-256 encryption with crypto-js</li>
+            <li>• AES-256-GCM via native Web Crypto API</li>
+            <li>• PBKDF2 key derivation (SHA-256, 310,000 iterations)</li>
             <li>• No password storage or transmission</li>
           </ul>
         </div>

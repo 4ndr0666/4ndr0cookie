@@ -16,6 +16,8 @@ const SiteClearanceManager: React.FC = () => {
   const [confirmState, setConfirmState] = useState<ConfirmState>('idle');
   const [lastOp, setLastOp] = useState<OperationSummary | null>(null);
   const [autoReload, setAutoReload] = useState(true);
+  const [moduleEnabled, setModuleEnabled] = useState(true);
+  const [showBadge, setShowBadge] = useState(true);
 
   useEffect(() => {
     getCurrentSite();
@@ -33,8 +35,14 @@ const SiteClearanceManager: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const r = await chrome.storage.local.get(['autoReload']);
+      const r = await chrome.storage.local.get([
+        'autoReload',
+        'siteClearanceEnabled',
+        'showBadgeNotifications',
+      ]);
       if (typeof r.autoReload === 'boolean') setAutoReload(r.autoReload);
+      if (r.siteClearanceEnabled === false) setModuleEnabled(false);
+      if (r.showBadgeNotifications === false) setShowBadge(false);
     } catch (e) {
       console.error('[SCM] loadSettings failed', e);
     }
@@ -72,18 +80,20 @@ const SiteClearanceManager: React.FC = () => {
         timestamp: Date.now(),
       });
 
-      chrome.action.setBadgeText({ text: '✓', tabId: tab.id });
-      chrome.action.setBadgeBackgroundColor({ color: '#00E5FF', tabId: tab.id });
-      setTimeout(() => chrome.action.setBadgeText({ text: '', tabId: tab.id! }), 2000);
+      if (showBadge) {
+        chrome.action.setBadgeText({ text: '✓', tabId: tab.id });
+        chrome.action.setBadgeBackgroundColor({ color: '#00E5FF', tabId: tab.id });
+        setTimeout(() => chrome.action.setBadgeText({ text: '', tabId: tab.id! }), 2000);
+      }
 
       if (autoReload) setTimeout(() => chrome.tabs.reload(tab.id!), 400);
     } catch (e) {
       console.error('[SCM] Refresh failed', e);
-      setBadgeError();
+      if (showBadge) setBadgeError();
     } finally {
       setIsRunning(false);
     }
-  }, [currentSite, isRunning, autoReload]);
+  }, [currentSite, isRunning, autoReload, showBadge]);
 
   /* ── CLEAR: browsingData + client sweep, everything gone ── */
   const executeClear = useCallback(async () => {
@@ -131,18 +141,20 @@ const SiteClearanceManager: React.FC = () => {
         timestamp: Date.now(),
       });
 
-      chrome.action.setBadgeText({ text: '✓', tabId: tab.id });
-      chrome.action.setBadgeBackgroundColor({ color: '#00E5FF', tabId: tab.id });
-      setTimeout(() => chrome.action.setBadgeText({ text: '', tabId: tab.id! }), 2000);
+      if (showBadge) {
+        chrome.action.setBadgeText({ text: '✓', tabId: tab.id });
+        chrome.action.setBadgeBackgroundColor({ color: '#00E5FF', tabId: tab.id });
+        setTimeout(() => chrome.action.setBadgeText({ text: '', tabId: tab.id! }), 2000);
+      }
 
       if (autoReload) setTimeout(() => chrome.tabs.reload(tab.id!), 400);
     } catch (e) {
       console.error('[SCM] Clear failed', e);
-      setBadgeError();
+      if (showBadge) setBadgeError();
     } finally {
       setIsRunning(false);
     }
-  }, [currentSite, isRunning, autoReload]);
+  }, [currentSite, isRunning, autoReload, showBadge]);
 
   const setBadgeError = () => {
     chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
@@ -193,7 +205,7 @@ const SiteClearanceManager: React.FC = () => {
             <div className="flex gap-2">
               <button
                 onClick={handleRefreshClick}
-                disabled={isRunning || !currentSite}
+                disabled={isRunning || !currentSite || !moduleEnabled}
                 aria-label="Refresh site — clears telemetry, stays logged in"
                 className="hud-btn flex-1"
                 style={{ fontSize: '0.75rem' }}
@@ -202,7 +214,7 @@ const SiteClearanceManager: React.FC = () => {
               </button>
               <button
                 onClick={handleClearClick}
-                disabled={isRunning || !currentSite}
+                disabled={isRunning || !currentSite || !moduleEnabled}
                 aria-label="Clear site — scorched earth, logs you out"
                 className="hud-btn hud-btn-danger flex-1"
                 style={{ fontSize: '0.75rem' }}

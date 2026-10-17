@@ -22,7 +22,11 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ tabs, activeTab, onTabCha
           className={`hud-tab ${activeTab === tab.id ? 'hud-tab-active' : ''}`}
         >
           <div className="flex items-center justify-center space-x-2">
-            <span className="text-lg">{tab.icon}</span>
+            {tab.icon && (
+              <span className="hud-icon text-lg" aria-hidden="true">
+                {tab.icon}
+              </span>
+            )}
             <span>{tab.label}</span>
           </div>
         </button>

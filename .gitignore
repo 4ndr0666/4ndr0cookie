@@ -1,6 +1,8 @@
-# Secrets & Tests
+# Secrets & Encrypted Archives
 secrets.json
 *.env
+*.vault
+*.4nt
 0-tests/*
 
 ## Editor and Shell
@@ -13,12 +15,11 @@ secrets.json
 *.swp
 *.swo
 *.bak
-*.swo
-*.swn  
+*.swn
 *.~?
 *~
 
-## Logs and Runtime 
+## Logs and Runtime
 *.log
 *.log.*
 *.pid
@@ -40,11 +41,12 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 .yarn/cache/
+package-lock.json
 
 ## C/C++/Rust/Go
-target/           
+target/
 *.dll
-bin/             
+bin/
 *.o
 *.ko
 *.a
@@ -54,7 +56,7 @@ bin/
 ## Vendor
 vendor/
 
-## Operating‑system Noise 
+## Operating-system Noise
 .thumbnails/
 $RECYCLE.BIN/
 desktop.ini
@@ -65,7 +67,6 @@ Thumbs.db
 *.cache*
 *tmp*
 *.tmp*
-*.pyc
 *.part
 
 ## Archives
@@ -78,7 +79,7 @@ Thumbs.db
 *.xz
 
 ## Large Media
-*.webm     
+*.webm
 *.iso
 *.img
 *.mp4
@@ -89,7 +90,4 @@ Thumbs.db
 *.3gp
 *.flv
 *.webp
-node_modules
-screenshots
-dist
-package-lock.json
+screenshots/

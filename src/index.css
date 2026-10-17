@@ -186,6 +186,25 @@ body {
     outline-offset: 2px;
   }
 
+  /* ── Unicode icon system — #15FFFF outline (spec accent) ──
+     Emoji glyphs cannot take text-stroke (they render as color bitmaps),
+     so the outline is built from stacked directional drop-shadow filters,
+     which trace the glyph silhouette, plus a soft HUD glow. Monochrome
+     glyphs (⎘ ↑ ↓) inherit the #15FFFF fill color directly. */
+  .hud-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    color: #15FFFF;
+    filter:
+      drop-shadow(1.5px 0 0 #15FFFF) drop-shadow(-1.5px 0 0 #15FFFF)
+      drop-shadow(0 1.5px 0 #15FFFF) drop-shadow(0 -1.5px 0 #15FFFF)
+      drop-shadow(0 0 6px rgba(21, 255, 255, 0.6));
+    user-select: none;
+    pointer-events: none;
+  }
+
   /* ── Status badges ── */
   .status-fresh {
     background: rgba(0, 229, 255, 0.15);
