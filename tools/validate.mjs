@@ -1006,6 +1006,12 @@ async function runSuite() {
     for (const rel of expectedFiles) {
       const full = path.join(ROOT, rel);
       assert.equal(fs.existsSync(full), true, `Missing ${rel}`);
+      const rawSrc = fs.readFileSync(full, 'utf8');
+      assert.equal(
+        /const\s+\w+\s*=\s*chrome\.downloads\.download\s*\(/.test(rawSrc),
+        false,
+        `${rel} must not assign void-typed chrome.downloads.download callback overload without unknown cast (TS1345)`,
+      );
       const compiled = getTranspiledCode(full);
       assert.equal(typeof compiled, 'string');
       assert.equal(compiled.length > 0, true);

@@ -1023,9 +1023,13 @@ export const downloadBackupFile = async (
           };
 
           try {
-            const maybePromise = chrome.downloads.download(
+            const invokeDownload = chrome.downloads.download as (
+              options: chrome.downloads.DownloadOptions,
+              callback?: (downloadId: number) => void,
+            ) => unknown;
+            const maybePromise: unknown = invokeDownload(
               { url, filename },
-              (id) => {
+              (id: number) => {
                 const lastErr = chrome.runtime?.lastError;
                 if (lastErr) {
                   finish(undefined, new Error(lastErr.message));
@@ -1034,7 +1038,11 @@ export const downloadBackupFile = async (
                 }
               },
             );
-            if (maybePromise && typeof (maybePromise as Promise<number>).then === 'function') {
+            if (
+              typeof maybePromise === 'object' &&
+              maybePromise !== null &&
+              typeof (maybePromise as Promise<number>).then === 'function'
+            ) {
               (maybePromise as Promise<number>).then(
                 (id) => finish(id),
                 (err) => finish(undefined, err instanceof Error ? err : new Error(String(err))),
