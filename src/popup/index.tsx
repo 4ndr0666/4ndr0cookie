@@ -3,6 +3,7 @@
  *
  * Four-module popup: Site Clear · Cookie Tools · Vault · Backup/Restore.
  * Feature flags set in the Options page gate each module (default: enabled).
+ * Supports `?tab=<id>` query parameter when opened in a persistent browser tab.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -34,6 +35,21 @@ const tabs = [
   { id: 'backup',    label: 'Backup', icon: '💾' },
 ];
 
+const resolveInitialTab = (): string => {
+  try {
+    const search = typeof location !== 'undefined' ? location.search : '';
+    if (search) {
+      const requested = new URLSearchParams(search).get('tab');
+      if (requested && tabs.some((t) => t.id === requested)) {
+        return requested;
+      }
+    }
+  } catch {
+    // Fallback to default tab
+  }
+  return 'clearance';
+};
+
 const DisabledModule: React.FC<{ name: string }> = ({ name }) => (
   <div className="hud-card p-6 text-center">
     <p className="hud-title" style={{ fontSize: '0.75rem' }}>{name} disabled</p>
@@ -44,7 +60,7 @@ const DisabledModule: React.FC<{ name: string }> = ({ name }) => (
 );
 
 const Popup: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('clearance');
+  const [activeTab, setActiveTab] = useState(resolveInitialTab);
   const [flags, setFlags] = useState<FeatureFlags>(DEFAULT_FLAGS);
 
   useEffect(() => {

@@ -2,25 +2,28 @@
 /**
  * tools/validate.mjs
  *
- * Self-contained 42-point verification battery for 4ndr0cookie v1.1.1.
+ * Self-contained 52-point verification battery for 4ndr0cookie v1.1.1.
  * Exercises:
- *   1. Static security & zero-PII/secret-exposure audit across all tracked files
- *   2. Directive Alpha — Export sanitization matrix (Cloudflare, PSIDTS, telemetry)
- *   3. Directive Beta  — Native Web Crypto (AES-256-GCM + PBKDF2 310k, v2 + legacy v1)
- *   4. Directive Gamma — Restoration URL synthesis, SetDetails hardening, allSettled
- *   5. Directive Delta — Single-site Cookie CRUD, Netscape round-trip, SameSite guard
+ *   1. Static security & zero-PII/secret-exposure audit across all tracked files (T01–T05)
+ *   2. Directive Alpha — Export sanitization matrix (Cloudflare, PSIDTS, telemetry) (T06–T10)
+ *   3. Directive Beta  — Native Web Crypto (AES-256-GCM + PBKDF2 310k, v2 + legacy v1 + SJCL .ckz + Netscape) (T11–T19, T43–T44)
+ *   4. Directive Gamma — Restoration URL synthesis, SetDetails hardening, filterCookieForRestore
+ *      (cndobhdcpmpilkebeebeecgminfhkpcj parity), 3-tier restoreSingleCookie & restoreCookiesBatch,
+ *      collectAllBrowserCookies, downloadBackupFile (chrome.downloads.download + onChanged),
+ *      and session-persisted pending restore state (T20–T24, T45–T50)
+ *   5. Directive Delta — Single-site Cookie CRUD, Netscape round-trip, SameSite/HTTPS guard & fallback (T25–T30, T51)
  *   6. Sensitive Storage Redesign — At-rest VaultStorageEnvelope (AES-256-GCM),
  *      session cache (`chrome.storage.session`), binary `.vault` ("4ntv"),
  *      legacy migration (`emailGroups`, `emailList`, `pasteEntries`, flat creds)
- *      with immediate legacy-key scrubbing, and colon-grammar parser
- *   7. Service Worker IPC message bus & client-side clearance payloads
- *   8. Full TypeScript/TSX transpilation & structural integrity across all 13 `src/` units
+ *      with immediate legacy-key scrubbing, and colon-grammar parser (T31–T36)
+ *   7. Service Worker IPC message bus (including `backup-cookies` & `restore-cookies`)
+ *      & client-side clearance payloads (T37–T42, T52)
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { webcrypto } from 'node:crypto';
+import { webcrypto, createCipheriv, pbkdf2Sync } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
@@ -30,7 +33,7 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 const requireFn = createRequire(import.meta.url);
 
-/* ─── Transpiler Resolution (local node_modules -> system nodejs -> fallback) ─── */
+/* ─── Deterministic Zero-Dependency TypeScript/TSX Transpiler ─── */
 
 function stripInterfacesAndTypeAliases(src) {
   const lines = src.split('\n');
@@ -603,6 +606,9 @@ function createChromeMock(initialLocal = {}, initialSync = {}, initialSession = 
   const scriptsExecuted = [];
   const commandListeners = [];
   const messageListeners = [];
+  const downloadsTriggered = [];
+  const downloadsShown = [];
+  const downloadChangedListeners = [];
 
   const makeArea = (store) => ({
     _raw: store,
@@ -638,6 +644,9 @@ function createChromeMock(initialLocal = {}, initialSync = {}, initialSession = 
       scriptsExecuted,
       commandListeners,
       messageListeners,
+      downloadsTriggered,
+      downloadsShown,
+      downloadChangedListeners,
     },
     storage: {
       local: makeArea(localStore),
@@ -645,11 +654,15 @@ function createChromeMock(initialLocal = {}, initialSync = {}, initialSession = 
       session: makeArea(sessionStore),
     },
     runtime: {
+      lastError: null,
       onInstalled: { addListener() {} },
       onMessage: {
         addListener(fn) {
           messageListeners.push(fn);
         },
+      },
+      getURL(p) {
+        return `chrome-extension://mockid/${p}`;
       },
     },
     commands: {
@@ -675,6 +688,7 @@ function createChromeMock(initialLocal = {}, initialSync = {}, initialSession = 
       reload(tabId) {
         reloads.push(tabId);
       },
+      create() {},
     },
     browsingData: {
       async remove(options, dataToRemove) {
@@ -686,27 +700,71 @@ function createChromeMock(initialLocal = {}, initialSync = {}, initialSession = 
         scriptsExecuted.push(injection);
       },
     },
+    downloads: {
+      download(options, cb) {
+        const id = downloadsTriggered.length + 101;
+        downloadsTriggered.push({ id, ...options });
+        if (typeof cb === 'function') cb(id);
+        return Promise.resolve(id);
+      },
+      show(id) {
+        downloadsShown.push(id);
+      },
+      onChanged: {
+        addListener(fn) {
+          downloadChangedListeners.push(fn);
+        },
+        removeListener(fn) {
+          const idx = downloadChangedListeners.indexOf(fn);
+          if (idx >= 0) downloadChangedListeners.splice(idx, 1);
+        },
+      },
+    },
     cookies: {
       _failName: null,
+      _rejectUnspecifiedSameSite: false,
+      _rejectLeadingDotDomain: false,
       async getAllCookieStores() {
         return [{ id: '0' }, { id: '1' }];
       },
       async getAll(filter = {}) {
+        let out = [...cookiesList];
+        if (filter.storeId) {
+          out = out.filter((c) => (c.storeId || '0') === filter.storeId);
+        }
         if (filter.domain) {
-          return cookiesList.filter((c) =>
+          out = out.filter((c) =>
             c.domain.replace(/^\.+/, '').endsWith(filter.domain.replace(/^\.+/, '')),
           );
         }
-        return [...cookiesList];
+        return out;
       },
       async set(details) {
         if (this._failName && details.name === this._failName) {
           throw new Error(`Simulated rejection for ${details.name}`);
         }
+        if (details.secure && details.url && details.url.startsWith('http://')) {
+          throw new Error('Secure cookies cannot be set from non-secure http:// URLs');
+        }
+        if (details.name.startsWith('__Host-')) {
+          if (!details.secure || details.domain || details.path !== '/' || !details.url.startsWith('https://')) {
+            throw new Error('Invalid __Host- cookie attributes');
+          }
+        }
+        if (this._rejectUnspecifiedSameSite && details.sameSite === 'unspecified') {
+          throw new Error('Rejected unspecified SameSite');
+        }
+        if (this._rejectLeadingDotDomain && details.domain && details.domain.startsWith('.')) {
+          throw new Error('Rejected leading dot domain');
+        }
         const hostOnly = !details.domain;
         const domain = details.domain || new URL(details.url).hostname;
         const idx = cookiesList.findIndex(
-          (c) => c.name === details.name && c.domain === domain && c.path === (details.path || '/'),
+          (c) =>
+            c.name === details.name &&
+            c.domain === domain &&
+            c.path === (details.path || '/') &&
+            (c.storeId || '0') === (details.storeId || '0'),
         );
         const record = {
           name: details.name,
@@ -789,17 +847,26 @@ function loadTsModule(relPath, chromeMock) {
       if (spec === 'react-dom/client') {
         return { createRoot: () => ({ render() {} }) };
       }
-      if (spec.endsWith('.css')) return {};
       return requireFn(spec);
     };
 
     const mockDocument = {
+      _clickedLinks: [],
       getElementById: () => ({}),
-      createElement: () => ({
-        setAttribute() {},
-        click() {},
-        remove() {},
-      }),
+      createElement: () => {
+        const el = {
+          href: '',
+          download: '',
+          setAttribute(k, v) {
+            this[k] = v;
+          },
+          click() {
+            mockDocument._clickedLinks.push({ href: this.href, download: this.download });
+          },
+          remove() {},
+        };
+        return el;
+      },
       body: { appendChild() {} },
     };
 
@@ -1141,7 +1208,7 @@ async function runSuite() {
 
   await test('T19', 'Beta: parseCookieBackup auto-detects unencrypted JSON cookie array and {cookies} wrapper', async () => {
     const resArr = await backupMod.parseCookieBackup(JSON.stringify(sampleCookies));
-    assert.equal(resArr.cookies.length, 1);
+    assert.equal(resArr.length === undefined ? resArr.cookies.length : 0, 1);
     const resWrap = await backupMod.parseCookieBackup(JSON.stringify({ cookies: sampleCookies }));
     assert.equal(resWrap.cookies.length, 1);
   });
@@ -1197,7 +1264,7 @@ async function runSuite() {
     assert.equal(details.expirationDate, 1890000000);
   });
 
-  await test('T23', 'Gamma: buildCookieSetDetails enforces secure=true when sameSite is no_restriction', () => {
+  await test('T23', 'Gamma: buildCookieSetDetails enforces secure=true and https:// URL when sameSite is no_restriction', () => {
     const details = backupMod.buildCookieSetDetails(
       {
         name: 'cross_site',
@@ -1212,6 +1279,7 @@ async function runSuite() {
     );
     assert.equal(details.sameSite, 'no_restriction');
     assert.equal(details.secure, true);
+    assert.equal(details.url, 'https://example.com/');
   });
 
   await test('T24', 'Gamma: buildCookieSetDetails validates storeId against availableStoreIds', () => {
@@ -1450,26 +1518,22 @@ async function runSuite() {
     assert.equal(rawStoredJson.includes('UltraSecret!Password'), false);
     assert.equal(rawStoredJson.includes('recovery code 9911'), false);
 
-    // While session cache is active, loadVaultFromStorage returns unlocked state
     const activeState = await vaultMod.loadVaultFromStorage();
     assert.equal(activeState.sealed, true);
     assert.equal(activeState.locked, false);
     assert.equal(activeState.groups[0].accounts[0].password, 'UltraSecret!Password:With:Colons');
 
-    // Clear session cache (simulate browser close or manual Lock)
     await vaultMod.clearSessionVaultCache();
     const lockedState = await vaultMod.loadVaultFromStorage();
     assert.equal(lockedState.sealed, true);
     assert.equal(lockedState.locked, true);
     assert.deepEqual(lockedState.groups, []);
 
-    // Unseal with correct passphrase
     const unsealed = await vaultMod.unsealVaultStorage(lockedState.envelope, 'MasterVaultKey!2026');
     assert.equal(unsealed.length, 1);
     assert.equal(unsealed[0].accounts[0].email, 'operator@example.com');
     assert.equal(unsealed[0].accounts[0].password, 'UltraSecret!Password:With:Colons');
 
-    // Reject wrong passphrase
     await assert.rejects(
       () => vaultMod.unsealVaultStorage(lockedState.envelope, 'WrongPassphrase'),
     );
@@ -1511,27 +1575,22 @@ async function runSuite() {
   await test('T35', 'Vault: parseAccountLine handles all 5 input grammars without corrupting passwords with colons/spaces', () => {
     const vaultMod = loadTsModule('src/modules/credentialVault/index.ts', chromeMock);
 
-    // 1. label: email: password (with colons and spaces inside password)
     assert.deepEqual(
       vaultMod.parseAccountLine('m1: user@example.com: p@ss : word : 123'),
       { label: 'm1', email: 'user@example.com', password: 'p@ss : word : 123' },
     );
-    // 2. email: password (with colons inside password)
     assert.deepEqual(
       vaultMod.parseAccountLine('user@example.com: secret:colon:pw'),
       { label: '', email: 'user@example.com', password: 'secret:colon:pw' },
     );
-    // 3. label: email
     assert.deepEqual(
       vaultMod.parseAccountLine('m2: alias@example.com'),
       { label: 'm2', email: 'alias@example.com', password: '' },
     );
-    // 4. bare email
     assert.deepEqual(
       vaultMod.parseAccountLine('bare@example.com'),
       { label: '', email: 'bare@example.com', password: '' },
     );
-    // 5. legacy PasteManager label: secret
     assert.deepEqual(
       vaultMod.parseAccountLine('ssh_key: ssh-ed25519 AAAA1234'),
       { label: 'ssh_key', email: 'ssh_key', password: 'ssh-ed25519 AAAA1234' },
@@ -1758,6 +1817,310 @@ async function runSuite() {
       const mod = loadTsModule(rel, uiChrome);
       assert.equal(typeof mod, 'object');
     }
+  });
+
+  /* ═══ 8. Cookie Backup & Restore Overhaul (cndobhdcpmpilkebeebeecgminfhkpcj Parity, T43–T52) ═══ */
+
+  await test('T43', 'Beta/SJCL: decryptBackup & parseCookieBackup decrypt SJCL .ckz (AES-256-CCM + PBKDF2-SHA256) envelopes', async () => {
+    const sjclPass = 'CkzRestore#Pass';
+    const salt = Buffer.from('a1b2c3d4e5f60718', 'hex');
+    const ivFull = Buffer.from('00112233445566778899aabbccddeeff', 'hex');
+    const nonce13 = ivFull.subarray(0, 13); // L=2 -> 15 - 2 = 13-byte nonce
+    const keyBytes = pbkdf2Sync(sjclPass, salt, 1000, 32, 'sha256');
+    const plainBytes = Buffer.from(JSON.stringify(sampleCookies), 'utf8');
+    const cipher = createCipheriv('aes-256-ccm', keyBytes, nonce13, { authTagLength: 8 });
+    const enc = Buffer.concat([cipher.update(plainBytes), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    const ctWithTag = Buffer.concat([enc, tag]);
+
+    const ckzEnvelope = JSON.stringify({
+      iv: ivFull.toString('base64'),
+      v: 1,
+      iter: 1000,
+      ks: 256,
+      ts: 64,
+      mode: 'ccm',
+      adata: '',
+      cipher: 'aes',
+      salt: salt.toString('base64'),
+      ct: ctWithTag.toString('base64'),
+    });
+
+    assert.equal(backupMod.detectEncryptedBackup(ckzEnvelope), true);
+    const parsed = await backupMod.parseCookieBackup(ckzEnvelope, sjclPass);
+    assert.equal(parsed.cookies.length, 1);
+    assert.equal(parsed.cookies[0].name, 'SID');
+    assert.equal(parsed.cookies[0].value, 'secret-session-value');
+
+    await assert.rejects(
+      () => backupMod.parseCookieBackup(ckzEnvelope, 'WrongCkzPass'),
+      /Decryption failed/,
+    );
+  });
+
+  await test('T44', 'Beta: parseCookieBackup parses Netscape HTTP Cookie File backups without requiring a password', async () => {
+    const netscapeText =
+      '# Netscape HTTP Cookie File\n' +
+      '#HttpOnly_.example.com\tTRUE\t/\tTRUE\t1999999999\tSID\tnetscape-val\n';
+    assert.equal(backupMod.detectEncryptedBackup(netscapeText), false);
+    const parsed = await backupMod.parseCookieBackup(netscapeText);
+    assert.equal(parsed.cookies.length, 1);
+    assert.equal(parsed.cookies[0].name, 'SID');
+    assert.equal(parsed.cookies[0].value, 'netscape-val');
+    assert.equal(parsed.cookies[0].httpOnly, true);
+  });
+
+  await test('T45', 'Gamma: buildCookieSetDetails enforces __Host- and __Secure- prefix RFC 6265bis invariants', () => {
+    const hostPrefixed = backupMod.buildCookieSetDetails(
+      {
+        name: '__Host-session',
+        value: 'tok1',
+        domain: '.github.com',
+        path: '/sub',
+        secure: false,
+        httpOnly: true,
+        hostOnly: false,
+      },
+      ['0'],
+    );
+    assert.equal('domain' in hostPrefixed, false);
+    assert.equal(hostPrefixed.secure, true);
+    assert.equal(hostPrefixed.path, '/');
+    assert.equal(hostPrefixed.url, 'https://github.com/');
+
+    const securePrefixed = backupMod.buildCookieSetDetails(
+      {
+        name: '__Secure-1PSID',
+        value: 'tok2',
+        domain: '.google.com',
+        path: '/',
+        secure: false,
+        httpOnly: true,
+        hostOnly: false,
+      },
+      ['0'],
+    );
+    assert.equal(securePrefixed.secure, true);
+    assert.equal(securePrefixed.url, 'https://google.com/');
+    assert.equal(securePrefixed.domain, '.google.com');
+  });
+
+  await test('T46', 'Gamma: filterCookieForRestore implements cndobhdcpmpilkebeebeecgminfhkpcj filterCookie normalization', () => {
+    const c1 = backupMod.filterCookieForRestore(
+      {
+        name: 'legacy_cookie',
+        value: 'v1',
+        domain: '.sub.example.com',
+        path: '/app',
+        secure: false,
+        httpOnly: true,
+        hostOnly: false,
+        session: true,
+        sameSite: 'unspecified',
+        storeId: '0',
+      },
+      ['0'],
+    );
+    assert.equal(c1.url, 'http://sub.example.com/app');
+    assert.equal(c1.domain, 'sub.example.com');
+    assert.equal('hostOnly' in c1, false);
+    assert.equal('session' in c1, false);
+    assert.equal('sameSite' in c1, false);
+
+    const c2 = backupMod.filterCookieForRestore(
+      {
+        name: 'none_cookie',
+        value: 'v2',
+        domain: '.example.com',
+        path: '/',
+        secure: false,
+        httpOnly: false,
+        sameSite: 'no_restriction',
+      },
+      ['0'],
+    );
+    assert.equal('sameSite' in c2, false);
+  });
+
+  await test('T47', 'Gamma: restoreSingleCookie & restoreCookiesBatch recover via filterCookieForRestore when primary SetDetails is rejected', async () => {
+    const fallbackChrome = createChromeMock();
+    fallbackChrome.cookies._rejectUnspecifiedSameSite = true;
+    fallbackChrome.cookies._rejectLeadingDotDomain = true;
+    const fbBackupMod = loadTsModule('src/modules/cookie-backup/index.ts', fallbackChrome);
+
+    const futureExp = Math.floor(Date.now() / 1000) + 86400;
+    const pastExp = Math.floor(Date.now() / 1000) - 86400;
+
+    const batchRes = await fbBackupMod.restoreCookiesBatch([
+      {
+        name: 'quirky_cookie',
+        value: 'recovered',
+        domain: '.example.com',
+        path: '/',
+        secure: true,
+        httpOnly: true,
+        hostOnly: false,
+        session: false,
+        expirationDate: futureExp,
+        sameSite: 'unspecified',
+        storeId: '0',
+      },
+      {
+        name: 'expired_cookie',
+        value: 'old',
+        domain: '.example.com',
+        path: '/',
+        secure: true,
+        httpOnly: false,
+        session: false,
+        expirationDate: pastExp,
+      },
+    ]);
+
+    assert.equal(batchRes.restored, 1);
+    assert.equal(batchRes.failed, 0);
+    assert.equal(batchRes.skippedExpired, 1);
+    assert.equal(fallbackChrome._state.cookiesList.length, 1);
+    assert.equal(fallbackChrome._state.cookiesList[0].name, 'quirky_cookie');
+    assert.equal(fallbackChrome._state.cookiesList[0].value, 'recovered');
+  });
+
+  await test('T48', 'Gamma: collectAllBrowserCookies deduplicates across default context and getAllCookieStores', async () => {
+    const storeChrome = createChromeMock();
+    storeChrome._state.cookiesList.push(
+      { name: 'c_std', value: '1', domain: '.a.com', path: '/', storeId: '0' },
+      { name: 'c_incog', value: '2', domain: '.b.com', path: '/', storeId: '1' },
+    );
+    const storeBackupMod = loadTsModule('src/modules/cookie-backup/index.ts', storeChrome);
+    const all = await storeBackupMod.collectAllBrowserCookies();
+    assert.equal(all.length, 2);
+  });
+
+  await test('T49', 'Gamma: downloadBackupFile uses chrome.downloads.download + onChanged completion reveal', async () => {
+    const dlChrome = createChromeMock();
+    const dlMod = loadTsModule('src/modules/cookie-backup/index.ts', dlChrome);
+
+    const downloadId = await dlMod.downloadBackupFile('{"test":1}', 'backup.4nt', 'application/octet-stream');
+    assert.equal(downloadId, 101);
+    assert.equal(dlChrome._state.downloadsTriggered.length, 1);
+    assert.equal(dlChrome._state.downloadsTriggered[0].filename, 'backup.4nt');
+    assert.equal(dlChrome._state.downloadChangedListeners.length, 1);
+
+    // Simulate download completion event
+    dlChrome._state.downloadChangedListeners[0]({
+      id: 101,
+      state: { current: 'complete' },
+    });
+    assert.deepEqual(dlChrome._state.downloadsShown, [101]);
+    assert.equal(dlChrome._state.downloadChangedListeners.length, 0);
+  });
+
+  await test('T50', 'Gamma: Pending restore session cache persists across popup focus loss', async () => {
+    const sessChrome = createChromeMock();
+    const sessMod = loadTsModule('src/modules/cookie-backup/index.ts', sessChrome);
+
+    await sessMod.setPendingRestoreSession({
+      fileName: 'test-cookies.4nt',
+      payload: encryptedV2,
+      mode: 'file',
+      updatedAt: 123456,
+    });
+
+    const loaded = await sessMod.getPendingRestoreSession();
+    assert.equal(loaded.fileName, 'test-cookies.4nt');
+    assert.equal(loaded.payload, encryptedV2);
+
+    await sessMod.clearPendingRestoreSession();
+    const afterClear = await sessMod.getPendingRestoreSession();
+    assert.equal(afterClear, null);
+  });
+
+  await test('T51', 'Delta: CookieManagerModule.importCookies promotes SameSite=None to https:// and recovers via fallback', async () => {
+    const cmFallbackChrome = createChromeMock();
+    cmFallbackChrome.cookies._rejectUnspecifiedSameSite = true;
+    const cmFallbackMod = loadTsModule('src/modules/cookieManager/index.ts', cmFallbackChrome);
+
+    const res = await cmFallbackMod.CookieManagerModule.importCookies([
+      {
+        name: 'samesite_none_http',
+        value: 'v1',
+        domain: '.target.example.com',
+        path: '/',
+        secure: false,
+        httpOnly: false,
+        hostOnly: false,
+        sameSite: 'no_restriction',
+      },
+      {
+        name: 'unspecified_samesite',
+        value: 'v2',
+        domain: '.target.example.com',
+        path: '/',
+        secure: true,
+        httpOnly: true,
+        hostOnly: false,
+        sameSite: 'unspecified',
+      },
+    ]);
+    assert.equal(res.imported, 2);
+    assert.equal(res.failed, 0);
+    assert.equal(cmFallbackChrome._state.cookiesList.length, 2);
+  });
+
+  await test('T52', 'Service Worker: dispatchRuntimeMessage handles backup-cookies and restore-cookies end-to-end', async () => {
+    const swChrome = createChromeMock({
+      siteClearanceEnabled: true,
+      cookieBackupEnabled: true,
+      vaultEnabled: true,
+      showBadgeNotifications: true,
+      autoReload: true,
+    });
+    swChrome._state.cookiesList.push(
+      {
+        name: 'auth_token',
+        value: 'live-secret',
+        domain: '.example.com',
+        path: '/',
+        secure: true,
+        httpOnly: true,
+        hostOnly: false,
+        session: true,
+        storeId: '0',
+      },
+      {
+        name: '__cf_bm',
+        value: 'ephemeral',
+        domain: '.example.com',
+        path: '/',
+        secure: true,
+        httpOnly: true,
+        hostOnly: false,
+        session: true,
+        storeId: '0',
+      },
+    );
+    const swMod = loadTsModule('src/background/service-worker.ts', swChrome);
+
+    const backupRes = await swMod.dispatchRuntimeMessage({
+      action: 'backup-cookies',
+      password: 'SwBackupPassword!1',
+    });
+    assert.equal(backupRes.success, true);
+    assert.equal(backupRes.report.retained, 1);
+    assert.equal(backupRes.report.dropped, 1);
+
+    swChrome._state.cookiesList.length = 0;
+
+    const restoreRes = await swMod.dispatchRuntimeMessage({
+      action: 'restore-cookies',
+      payload: backupRes.encrypted,
+      password: 'SwBackupPassword!1',
+    });
+    assert.equal(restoreRes.success, true);
+    assert.equal(restoreRes.restored, 1);
+    assert.equal(restoreRes.failed, 0);
+    assert.equal(swChrome._state.cookiesList.length, 1);
+    assert.equal(swChrome._state.cookiesList[0].name, 'auth_token');
   });
 
   console.log(`CHECK RESULT: PASS (${passed}/${passed + failed} checks green, 0 failures)`);

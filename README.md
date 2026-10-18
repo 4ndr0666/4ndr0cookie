@@ -46,19 +46,20 @@ A **unified, powerful Chrome extension** with essential engagement tools crafted
 
 ### 🍪 Cookie Tools
 - JSON / Netscape formats — clipboard (stealth mode) or file download
-- Auto-detecting import: JSON arrays, `{cookies:[…]}` wrappers, or Netscape files
+- Auto-detecting import: JSON arrays, `{cookies:[…]}` wrappers, or Netscape files (via file upload or inline paste fallback)
 - Inline cookie editing (name/value) with lossless identity and SameSite/storeId handling
 - Per-cookie delete and bulk site delete
 - Domain-specific, search-filtered view  
 
 ### 💾 Encrypted Cookie Backup
-- One-click system-wide backup  
+- One-click system-wide backup across all active cookie stores (`collectAllBrowserCookies`) with `chrome.downloads.download` delivery and one-click clipboard copy
 - AES-256-GCM via native Web Crypto API (zero dependencies)
 - PBKDF2 key derivation — SHA-256, 310,000 iterations  
 - Export sanitization: ephemeral tokens (`__cf_bm`, `_ga*`, `__Secure-*PSIDTS`, …) never enter the baseline  
 - JSON envelope carrying IV + salt + ciphertext  
-- Restores current and v1.0.x `.4nt` formats  
-- Idempotent upsert restore (`Promise.allSettled`, live sessions never swept, expired skipped) with progress feedback  
+- Restores current `.4nt` (v2), legacy v1.0.x `.4nt`, SJCL `.ckz` (`Cookie Backup and Restore` compatibility via pure Web Crypto AES-CCM/GCM), JSON, and Netscape formats  
+- Resilient popup restoration: immediate `FileReader` ingestion, session-persisted pending state (`chrome.storage.session`), inline paste-text fallback (`"Unable to upload a file? Paste backup"`), and one-click full-tab popout (`↗ Full Tab`)  
+- Multi-tier hardened upsert restore (`Promise.allSettled`, `buildCookieSetDetails` + `filterCookieForRestore` fallback, `__Host-`/`__Secure-`/`SameSite=None` HTTPS URL synthesis, live sessions never swept, expired skipped) with progress feedback  
 
 ### 🎨 Dark Theme Interface
 - Futuristic HUD style (#111827 background, #15FFFF highlights)  
@@ -150,8 +151,8 @@ npm run build
 
 * **Credential Vault** → track throwaway rotations, seal vault at rest with AES-256-GCM, single-click copy, `.vault` export/import
 * **Site Clearance** → `Alt+C` or popup button
-* **Cookie Tools** → JSON/Netscape export (clipboard/file), import, inline edit
-* **Backup/Restore** → Encrypted `.4nt` system backups
+* **Cookie Tools** → JSON/Netscape export (clipboard/file), file or paste import, inline edit
+* **Backup/Restore** → Encrypted `.4nt` / `.ckz` system backups with file upload, paste fallback, and full-tab mode
 * **Options** → Live-wired feature flags, sync settings, import/export
 
 ---
@@ -195,17 +196,20 @@ npm run build
 ### v1.1.1 – Pipeline Overhaul, Sensitive Storage Redesign & Gap Mitigation
 
 * **Sensitive Storage Redesign**: extracted `src/modules/credentialVault/index.ts`, purged all hardcoded personal seed credentials from source code, added at-rest AES-256-GCM vault sealing (`VaultStorageEnvelope`) with `chrome.storage.session` ephemeral unlock caching, and automated scrubbing of legacy `emailGroups`/`emailList`/`pasteEntries`/`pasteManagerItems` storage keys
-* **Cookie Tools fixed**: single-site JSON/Netscape export (clipboard + download), auto-detecting import (JSON / Netscape), inline cookie editing with SameSite/storeId preservation, bulk site delete
-* **Backup/Restore restored** as a popup module (was orphaned) and rebuilt on native Web Crypto — AES-256-GCM + PBKDF2 (310k iterations), replacing interim crypto-js usage, with accurate v2 envelope auto-detection in `parseCookieBackup`
+* **Cookie Backup & Restore Hardened**:
+  * Wired `chrome.downloads.download` + `chrome.downloads.onChanged` completion reveal (`downloadBackupFile`) with deferred `URL.revokeObjectURL` cleanup so popup downloads never fail from premature blob revocation
+  * Added immediate `FileReader` ingestion, `chrome.storage.session` pending-restore persistence, inline paste-text fallback (`"Unable to upload a file? Paste backup"`), clipboard backup copy, and `↗ Full Tab` popout (`?tab=backup`) to eliminate popup focus-loss failures during OS file selection
+  * Added `filterCookieForRestore` and 3-tier `restoreSingleCookie` / `restoreCookiesBatch` (`cndobhdcpmpilkebeebeecgminfhkpcj` parity: strips leading domain dot, drops `no_restriction`/`unspecified` SameSite on fallback, enforces `__Host-`/`__Secure-` and `SameSite=None` HTTPS URL synthesis)
+  * Added native Web Crypto RFC 3610 AES-CCM / AES-GCM decryption for SJCL `.ckz` backups alongside `.4nt` (v2/v1), JSON, and Netscape formats via `parseCookieBackup`
+* **Cookie Tools fixed**: single-site JSON/Netscape export (clipboard + download), auto-detecting file and paste import (JSON / Netscape), inline cookie editing with SameSite/storeId preservation, bulk site delete
 * **Export sanitization matrix**: Cloudflare/bot tokens, sliding-window auth tickets, and telemetry cookies are excluded from long-term recovery baselines
-* **Restoration hardening**: `Promise.allSettled` batching, cookie-derived URL synthesis, storeId validation, host-only/session/SameSite=None data-loss guards, idempotent upsert
 * **Netscape fidelity**: `#HttpOnly_` prefix on export, normalized domain/subdomain flags, full parser on import (lossless round-trip)
 * **Credential Vault upgraded** into a rotation tracker: last-used stamping on every copy, `▸ NEXT IN ROTATION` marker, account labels, site/account search filter, bulk copy, lossless text import, legacy email-list/paste/flat-credential migration, quick-copy popover status badge fix
-* **Service Worker IPC bus wired**: complete async `dispatchRuntimeMessage` handler (`ping`, `get-settings`, `clear-site-data`, `refresh-site-data`, `vault-session-*`) with HTTP/HTTPS scheme validation
+* **Service Worker IPC bus wired**: complete async `dispatchRuntimeMessage` handler (`ping`, `get-settings`, `clear-site-data`, `refresh-site-data`, `backup-cookies`, `restore-cookies`, `vault-session-*`) with HTTP/HTTPS scheme validation
 * **Options wired live**: every toggle now gates real behavior; autoReload sync/local mismatch fixed; vault feature flag added
 * **Icon system**: `#15FFFF` outlined unicode icons (`.hud-icon`) on tabs and controls
 * **Dead code purge**: PasteManager, EmailListManager, ClipboardManager, debug console dump, crypto-js/express dependencies removed — zero stubs, zero orphaned references
-* Verified: strict TypeScript/Babel compilation, 42-point automated verification battery (`npm run check`), idempotent documentation gate (`npm run docs`)
+* Verified: strict TypeScript/Babel compilation, 52-point automated verification battery (`npm run check`), idempotent documentation gate (`npm run docs`)
 
 ### v1.1.0 – Architecture & Vault Update
 
@@ -241,7 +245,7 @@ npm run build
 ## ⚡ Quick Reference
 
 * **Shortcut**: `Alt+C` site clearance
-* **File (Cookies)**: `.4nt` (AES-256-GCM encrypted backup)
+* **File (Cookies)**: `.4nt` (AES-256-GCM encrypted backup) / `.ckz` (SJCL compatible)
 * **File (Vault)**: `.vault` (AES-256-GCM encrypted credentials)
 * **Theme**: Dark (#111827) + Cyan (#00E5FF) + icon accent (#15FFFF)
 

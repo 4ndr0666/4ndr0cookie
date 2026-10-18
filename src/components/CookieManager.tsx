@@ -2,7 +2,8 @@
  * CookieManager.tsx
  *
  * Single-site cookie tools: search, view, inline edit, delete, bulk delete,
- * JSON / Netscape export (clipboard + download) and auto-detecting import.
+ * JSON / Netscape export (clipboard + download) and auto-detecting import
+ * (via file input or inline paste fallback).
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -18,6 +19,8 @@ const CookieManager: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editValue, setEditValue] = useState('');
+  const [showPasteImport, setShowPasteImport] = useState(false);
+  const [pasteImportText, setPasteImportText] = useState('');
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -36,7 +39,7 @@ const CookieManager: React.FC = () => {
   const loadCookies = async () => {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab.url) {
+      if (tab?.url) {
         try {
           setHostname(new URL(tab.url).hostname);
         } catch {
@@ -108,33 +111,56 @@ const CookieManager: React.FC = () => {
     flash(`✓ Exported ${cookies.length} cookie(s) as ${format.toUpperCase()}`);
   };
 
-  /* ── Import (JSON or Netscape, auto-detected) ── */
+  /* ── Shared import processor (JSON or Netscape, auto-detected) ── */
+  const processImportContent = async (content: string) => {
+    let importedCookies: Cookie[];
+    try {
+      importedCookies = CookieManagerModule.parseImport(content);
+    } catch {
+      flash('✗ Invalid content — expected JSON or Netscape cookie format');
+      return false;
+    }
+
+    if (importedCookies.length === 0) {
+      flash('✗ No cookies found in input');
+      return false;
+    }
+
+    const { imported, failed } = await CookieManagerModule.importCookies(importedCookies);
+    await loadCookies();
+    flash(`✓ Imported ${imported}${failed ? `, ${failed} failed` : ''} cookie(s)`);
+    return true;
+  };
+
   const handleImportCookies = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    event.target.value = ''; // allow re-selecting the same file
     if (!file) return;
 
     try {
       const content = await file.text();
-      let importedCookies: Cookie[];
-      try {
-        importedCookies = CookieManagerModule.parseImport(content);
-      } catch {
-        flash('✗ Invalid file — expected JSON or Netscape cookie file');
-        return;
-      }
-
-      if (importedCookies.length === 0) {
-        flash('✗ No cookies found in file');
-        return;
-      }
-
-      const { imported, failed } = await CookieManagerModule.importCookies(importedCookies);
-      await loadCookies();
-      flash(`✓ Imported ${imported}${failed ? `, ${failed} failed` : ''} cookie(s)`);
+      await processImportContent(content);
     } catch (error) {
       console.error('Error importing cookies:', error);
       flash('✗ Import failed');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handlePasteImportSubmit = async () => {
+    if (!pasteImportText.trim()) {
+      flash('✗ Paste JSON or Netscape cookie text first');
+      return;
+    }
+    try {
+      const ok = await processImportContent(pasteImportText);
+      if (ok) {
+        setPasteImportText('');
+        setShowPasteImport(false);
+      }
+    } catch (error) {
+      console.error('Error importing pasted cookies:', error);
+      flash('✗ Paste import failed');
     }
   };
 
@@ -203,7 +229,7 @@ const CookieManager: React.FC = () => {
               📋 Copy Netscape
             </button>
             <label htmlFor="import-cookies-file" className="hud-btn flex-shrink-0 cursor-pointer">
-              📥 Import
+              📥 Import File
             </label>
             <input
               type="file"
@@ -212,6 +238,14 @@ const CookieManager: React.FC = () => {
               className="hidden"
               onChange={handleImportCookies}
             />
+            <button
+              type="button"
+              onClick={() => setShowPasteImport(!showPasteImport)}
+              className="hud-btn flex-shrink-0"
+              aria-label="Toggle paste cookie import"
+            >
+              {showPasteImport ? '✕ Close Paste' : '📋 Paste Import'}
+            </button>
             <button
               onClick={() => exportSiteCookies('json')}
               disabled={cookies.length === 0}
@@ -234,6 +268,27 @@ const CookieManager: React.FC = () => {
               🗑️ Delete All
             </button>
           </div>
+
+          {showPasteImport && (
+            <div className="space-y-2 mb-3">
+              <textarea
+                rows={4}
+                value={pasteImportText}
+                onChange={(e) => setPasteImportText(e.target.value)}
+                placeholder="Paste JSON cookie array or Netscape HTTP Cookie File lines here…"
+                className="hud-input font-mono text-xs"
+                aria-label="Paste cookies to import"
+              />
+              <button
+                type="button"
+                onClick={handlePasteImportSubmit}
+                className="hud-btn w-full"
+                aria-label="Import pasted cookies"
+              >
+                📥 Import Pasted Cookies
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span>

@@ -18,6 +18,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import '../index.css';
+import { downloadBackupFile } from '../modules/cookie-backup';
 
 interface Settings {
   siteClearanceEnabled: boolean;
@@ -94,26 +95,25 @@ const Options = () => {
   const resetToDefaults = () => setSettings(defaultSettings);
 
   const exportSettings = () => {
-    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '4ndr0cookie-settings.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBackupFile(
+      JSON.stringify(settings, null, 2),
+      '4ndr0cookie-settings.json',
+      'application/json',
+    ).catch(console.error);
   };
 
   const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    event.target.value = '';
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const imported = JSON.parse(e.target?.result as string);
-        setSettings({ ...defaultSettings, ...imported });
+        setSettings(normalizeSettings({ ...defaultSettings, ...imported }));
       } catch {
         alert('Invalid settings file');
+      } finally {
+        event.target.value = '';
       }
     };
     reader.readAsText(file);

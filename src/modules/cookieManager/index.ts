@@ -6,9 +6,11 @@
  * Work-order coverage:
  *   Delta — CRUD integrity: delete/update build valid URLs for dot-prefixed
  *           domains; update preserves SameSite and storeId invariants;
- *           import is failure-isolated via Promise.allSettled.
+ *           import is failure-isolated via Promise.allSettled with fallback
+ *           normalization (strip leading dot / omit unsupported SameSite).
  *   Gamma  — URL synthesis: leading dots stripped, protocol derived from the
- *           cookie's own `secure` flag, path appended.
+ *           cookie's own `secure` flag (and promoted to https:// for
+ *           SameSite=None, __Secure-*, and __Host-*), path slash-normalized.
  */
 
 /** SameSite string union ("no_restriction" | "lax" | "strict" | "unspecified"). */
@@ -33,11 +35,31 @@ export interface ImportResult {
   failed: number;
 }
 
+const normalizePath = (rawPath?: string): string => {
+  if (!rawPath) return '/';
+  return rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
+};
+
+const isSingleLabelOrIp = (bareHost: string): boolean => {
+  if (!bareHost) return true;
+  if (bareHost === 'localhost' || !bareHost.includes('.')) return true;
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(bareHost)) return true;
+  if (bareHost.startsWith('[') || bareHost.includes(':')) return true;
+  return false;
+};
+
 /** Gamma-compliant URL synthesis for cookies. */
 const cookieUrl = (cookie: Cookie): string => {
-  const host = cookie.domain.replace(/^\.+/, '');
-  const path = cookie.path || '/';
-  return `${cookie.secure ? 'https' : 'http'}://${host}${path}`;
+  const host = (cookie.domain || '').replace(/^\.+/, '');
+  const isHostPrefix = typeof cookie.name === 'string' && cookie.name.startsWith('__Host-');
+  const isSecurePrefix = typeof cookie.name === 'string' && cookie.name.startsWith('__Secure-');
+  const path = isHostPrefix ? '/' : normalizePath(cookie.path);
+  const secure =
+    Boolean(cookie.secure) ||
+    cookie.sameSite === 'no_restriction' ||
+    isHostPrefix ||
+    isSecurePrefix;
+  return `${secure ? 'https' : 'http'}://${host}${path}`;
 };
 
 export class CookieManagerModule {
@@ -100,6 +122,22 @@ export class CookieManagerModule {
     const exportFileDefaultName =
       `cookies_${site}${new Date().toISOString().split('T')[0]}.json`;
 
+    if (
+      typeof chrome !== 'undefined' &&
+      chrome.downloads &&
+      typeof chrome.downloads.download === 'function'
+    ) {
+      try {
+        chrome.downloads.download({
+          url: dataUri,
+          filename: exportFileDefaultName,
+        });
+        return;
+      } catch {
+        // Fall through to anchor download
+      }
+    }
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -125,7 +163,7 @@ export class CookieManagerModule {
       const bareDomain = cookie.domain.replace(/^\.+/, '');
       const domain = isSubdomainCookie ? `.${bareDomain}` : bareDomain;
       const subdomainFlag = isSubdomainCookie ? 'TRUE' : 'FALSE';
-      const path = cookie.path || '/';
+      const path = normalizePath(cookie.path);
       const secureFlag = cookie.secure ? 'TRUE' : 'FALSE';
       const expiration =
         cookie.expirationDate && !cookie.session
@@ -145,6 +183,22 @@ export class CookieManagerModule {
     const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     const exportFileName =
       `cookies_${site}${new Date().toISOString().split('T')[0]}.txt`;
+
+    if (
+      typeof chrome !== 'undefined' &&
+      chrome.downloads &&
+      typeof chrome.downloads.download === 'function'
+    ) {
+      try {
+        chrome.downloads.download({
+          url: dataUri,
+          filename: exportFileName,
+        });
+        return;
+      } catch {
+        // Fall through to anchor download
+      }
+    }
 
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -198,7 +252,7 @@ export class CookieManagerModule {
         name,
         value,
         domain,
-        path: path || '/',
+        path: normalizePath(path),
         secure: secureFlag === 'TRUE',
         httpOnly: line.startsWith('#HttpOnly_'),
         hostOnly,
@@ -240,15 +294,27 @@ export class CookieManagerModule {
       );
 
       const setOne = async (cookie: Cookie): Promise<boolean> => {
+        const isHostPrefix = typeof cookie.name === 'string' && cookie.name.startsWith('__Host-');
+        const isSecurePrefix = typeof cookie.name === 'string' && cookie.name.startsWith('__Secure-');
+        const bareHost = (cookie.domain || '').replace(/^\.+/, '');
+        const effectivePath = isHostPrefix ? '/' : normalizePath(cookie.path);
+        const effectiveSecure =
+          Boolean(cookie.secure) ||
+          cookie.sameSite === 'no_restriction' ||
+          isHostPrefix ||
+          isSecurePrefix;
+
         const details: chrome.cookies.SetDetails = {
-          url: cookieUrl(cookie),
+          url: `${effectiveSecure ? 'https' : 'http'}://${bareHost}${effectivePath}`,
           name: cookie.name,
           value: cookie.value,
-          path: cookie.path || '/',
-          secure: cookie.secure,
-          httpOnly: cookie.httpOnly,
+          path: effectivePath,
+          secure: effectiveSecure,
+          httpOnly: Boolean(cookie.httpOnly),
         };
-        if (!cookie.hostOnly && cookie.domain) details.domain = cookie.domain;
+        if (!isHostPrefix && !cookie.hostOnly && cookie.domain && !isSingleLabelOrIp(bareHost)) {
+          details.domain = cookie.domain;
+        }
         if (cookie.expirationDate && !cookie.session) {
           details.expirationDate = cookie.expirationDate;
         }
@@ -258,14 +324,59 @@ export class CookieManagerModule {
           cookie.sameSite === 'strict' ||
           cookie.sameSite === 'unspecified'
         ) {
-          if (cookie.sameSite === 'no_restriction') details.secure = true;
+          if (cookie.sameSite === 'no_restriction') {
+            details.secure = true;
+            details.url = `https://${bareHost}${effectivePath}`;
+          }
           details.sameSite = cookie.sameSite;
         }
         if (cookie.storeId && storeIds.includes(cookie.storeId)) {
           details.storeId = cookie.storeId;
         }
-        const result = await chrome.cookies.set(details);
-        return result !== null;
+
+        try {
+          const result = await chrome.cookies.set(details);
+          if (result !== null) return true;
+        } catch {
+          // If the cookie did not fail intentionally and has fallback-eligible attributes, try fallback only when domain/sameSite rejection occurred
+        }
+
+        if (
+          cookie.sameSite === 'unspecified' ||
+          (cookie.sameSite === 'no_restriction' && !cookie.secure) ||
+          (details.domain && details.domain.startsWith('.'))
+        ) {
+          const fallbackDetails: chrome.cookies.SetDetails = {
+            url: `${Boolean(cookie.secure) || isHostPrefix || isSecurePrefix ? 'https' : 'http'}://${bareHost}${effectivePath}`,
+            name: cookie.name,
+            value: cookie.value,
+            path: effectivePath,
+            secure: Boolean(cookie.secure) || isHostPrefix || isSecurePrefix,
+            httpOnly: Boolean(cookie.httpOnly),
+            ...(!isHostPrefix && !cookie.hostOnly && bareHost && !isSingleLabelOrIp(bareHost)
+              ? { domain: bareHost }
+              : {}),
+            ...(cookie.expirationDate && !cookie.session
+              ? { expirationDate: cookie.expirationDate }
+              : {}),
+            ...(cookie.sameSite &&
+            cookie.sameSite !== 'no_restriction' &&
+            cookie.sameSite !== 'unspecified'
+              ? { sameSite: cookie.sameSite }
+              : {}),
+            ...(cookie.storeId && storeIds.includes(cookie.storeId)
+              ? { storeId: cookie.storeId }
+              : {}),
+          };
+          try {
+            const fallbackResult = await chrome.cookies.set(fallbackDetails);
+            return fallbackResult !== null;
+          } catch {
+            return false;
+          }
+        }
+
+        return false;
       };
 
       // Gamma: a single rejected write must not terminate the sequence
@@ -301,15 +412,27 @@ export class CookieManagerModule {
         .then((stores) => stores.map((s) => s.id))
         .catch(() => [] as string[]);
 
+      const isHostPrefix = nextName.startsWith('__Host-');
+      const isSecurePrefix = nextName.startsWith('__Secure-');
+      const bareHost = (original.domain || '').replace(/^\.+/, '');
+      const effectivePath = isHostPrefix ? '/' : normalizePath(original.path);
+      const effectiveSecure =
+        Boolean(original.secure) ||
+        original.sameSite === 'no_restriction' ||
+        isHostPrefix ||
+        isSecurePrefix;
+
       const details: chrome.cookies.SetDetails = {
-        url: cookieUrl({ ...original, name: nextName }),
+        url: `${effectiveSecure ? 'https' : 'http'}://${bareHost}${effectivePath}`,
         name: nextName,
         value: patch.value,
-        path: original.path || '/',
-        secure: original.secure,
-        httpOnly: original.httpOnly,
+        path: effectivePath,
+        secure: effectiveSecure,
+        httpOnly: Boolean(original.httpOnly),
       };
-      if (!original.hostOnly && original.domain) details.domain = original.domain;
+      if (!isHostPrefix && !original.hostOnly && original.domain && !isSingleLabelOrIp(bareHost)) {
+        details.domain = original.domain;
+      }
       if (original.expirationDate && !original.session) {
         details.expirationDate = original.expirationDate;
       }
@@ -321,7 +444,7 @@ export class CookieManagerModule {
       ) {
         if (original.sameSite === 'no_restriction') {
           details.secure = true;
-          details.url = cookieUrl({ ...original, name: nextName, secure: true });
+          details.url = `https://${bareHost}${effectivePath}`;
         }
         details.sameSite = original.sameSite;
       }

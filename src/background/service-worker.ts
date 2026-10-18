@@ -20,12 +20,21 @@
  *   - "get-settings"        → normalized runtime feature flags
  *   - "clear-site-data"     → scorched-earth clearance on active or target tab
  *   - "refresh-site-data"   → client-side refresh on active or target tab
+ *   - "backup-cookies"      → background sanitized encrypted cookie backup
+ *   - "restore-cookies"     → background cookie backup decryption & batch upsert
  *   - "vault-session-get"   → retrieve ephemeral unlocked vault session state
  *   - "vault-session-set"   → store ephemeral unlocked vault session state
  *   - "vault-session-clear" → wipe ephemeral unlocked vault session state
  */
 
 import { refreshClientStorage, scorchClientStorage } from '../lib/clearancePayload';
+import {
+  collectAllBrowserCookies,
+  encryptBackup,
+  parseCookieBackup,
+  restoreCookiesBatch,
+  sanitizeCookies,
+} from '../modules/cookie-backup';
 import {
   clearSessionVaultCache,
   getSessionVaultCache,
@@ -199,6 +208,8 @@ export interface RuntimeIPCRequest {
   tabId?: number;
   groups?: SiteGroup[] | null;
   passphrase?: string | null;
+  password?: string;
+  payload?: string;
 }
 
 export const dispatchRuntimeMessage = async (
@@ -219,6 +230,41 @@ export const dispatchRuntimeMessage = async (
 
     case 'refresh-site-data':
       return await runSiteClearance('refresh', request?.tabId);
+
+    case 'backup-cookies': {
+      const settings = await loadRuntimeSettings();
+      if (!settings.cookieBackupEnabled) {
+        return { success: false, error: 'Cookie backup is disabled in Options.' };
+      }
+      const password = typeof request?.password === 'string' ? request.password.trim() : '';
+      if (!password) {
+        return { success: false, error: 'Password is required for encrypted backups.' };
+      }
+      const allCookies = await collectAllBrowserCookies();
+      const { cookies, report } = sanitizeCookies(allCookies);
+      const encrypted = await encryptBackup(cookies, password);
+      return {
+        success: true,
+        encrypted,
+        report,
+        totalCookies: allCookies.length,
+      };
+    }
+
+    case 'restore-cookies': {
+      const settings = await loadRuntimeSettings();
+      if (!settings.cookieBackupEnabled) {
+        return { success: false, error: 'Cookie backup is disabled in Options.' };
+      }
+      const payload = typeof request?.payload === 'string' ? request.payload : '';
+      const password = typeof request?.password === 'string' ? request.password.trim() : undefined;
+      const { cookies } = await parseCookieBackup(payload, password);
+      const batchResult = await restoreCookiesBatch(cookies);
+      return {
+        success: true,
+        ...batchResult,
+      };
+    }
 
     case 'vault-session-get': {
       const session = await getSessionVaultCache();

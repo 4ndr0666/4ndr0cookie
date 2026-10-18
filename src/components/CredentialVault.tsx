@@ -43,6 +43,7 @@ import {
   setSessionVaultCache,
   clearSessionVaultCache,
 } from '../modules/credentialVault';
+import { downloadBackupFile } from '../modules/cookie-backup';
 
 type PromptMode = 'export' | 'import' | 'seal' | 'unseal' | null;
 
@@ -415,12 +416,11 @@ const CredentialVault: React.FC = () => {
     if (!vaultPassword) return;
     try {
       const blob = await encryptVaultBlob(groups, vaultPassword);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `4ndr0cookie-vault-${Date.now()}.vault`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadBackupFile(
+        blob,
+        `4ndr0cookie-vault-${Date.now()}.vault`,
+        'application/octet-stream',
+      );
       setShowPwPrompt(null);
       setVaultPassword('');
       flash('✓ Vault exported');

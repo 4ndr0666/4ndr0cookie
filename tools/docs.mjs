@@ -32,6 +32,7 @@ const requiredReadmeSections = [
   '### 💾 Encrypted Cookie Backup',
   '### v1.1.1',
   'VaultStorageEnvelope',
+  'filterCookieForRestore',
 ];
 
 for (const section of requiredReadmeSections) {
